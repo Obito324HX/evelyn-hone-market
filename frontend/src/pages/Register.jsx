@@ -11,7 +11,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      await axios.post('http://127.0.0.1:5000/api/auth/register', { username, email, password })
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/auth/register', { username, email, password })
       navigate('/login')
     } catch (err) {
       setError('Registration failed. Try again.')

@@ -22,7 +22,7 @@ function ListingDetail() {
 
   const fetchListing = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/listings/')
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/listings/')
       const found = res.data.find(l => l.id === parseInt(id))
       setListing(found)
       if (found) fetchRatings(found.seller_id)
@@ -33,7 +33,7 @@ function ListingDetail() {
 
   const fetchRatings = async (sellerId) => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/ratings/${sellerId}`)
+      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/ratings/${sellerId}`)
       setRatings(res.data)
     } catch (err) {
       console.error(err)
@@ -43,7 +43,7 @@ function ListingDetail() {
   const submitRating = async () => {
     if (!user || !userRating) return
     try {
-      await axios.post('http://127.0.0.1:5000/api/ratings/', {
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/ratings/', {
         stars: userRating,
         comment,
         rater_id: user.user_id,
@@ -59,7 +59,7 @@ function ListingDetail() {
   const submitReport = async () => {
     if (!user || !reportReason) return
     try {
-      await axios.post('http://127.0.0.1:5000/api/reports/', {
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/reports/', {
         reason: reportReason,
         reporter_id: user.user_id,
         listing_id: listing.id

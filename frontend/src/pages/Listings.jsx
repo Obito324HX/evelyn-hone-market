@@ -20,8 +20,8 @@ function Listings() {
   const fetchListings = async () => {
     try {
       const url = category
-        ? `http://127.0.0.1:5000/api/listings/?category=${category}`
-        : 'http://127.0.0.1:5000/api/listings/'
+        ? `https://evelyn-hone-market-production.up.railway.app/api/listings/?category=${category}`
+        : 'https://evelyn-hone-market-production.up.railway.app/api/listings/'
       const res = await axios.get(url)
       setListings(res.data)
     } catch (err) {

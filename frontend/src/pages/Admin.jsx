@@ -36,42 +36,42 @@ function Admin() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/admin/stats', { headers })
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/stats', { headers })
       setStats(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/admin/users', { headers })
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/users', { headers })
       setUsers(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchListings = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/admin/listings', { headers })
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/listings', { headers })
       setListings(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchReports = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/admin/reports', { headers })
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/reports', { headers })
       setReports(res.data)
     } catch (err) { console.error(err) }
   }
 
   const verifyUser = async (id) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/admin/users/${id}/verify`, {}, { headers })
+      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}/verify`, {}, { headers })
       fetchUsers()
     } catch (err) { console.error(err) }
   }
 
   const approveSeller = async (id) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/admin/users/${id}/approve-seller`, {}, { headers })
+      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}/approve-seller`, {}, { headers })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -80,7 +80,7 @@ function Admin() {
   const deleteUser = async (id) => {
     if (!window.confirm('Delete this user?')) return
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/admin/users/${id}`, { headers })
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}`, { headers })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -89,7 +89,7 @@ function Admin() {
   const deleteListing = async (id) => {
     if (!window.confirm('Delete this listing?')) return
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/admin/listings/${id}`, { headers })
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/listings/${id}`, { headers })
       fetchListings()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -97,7 +97,7 @@ function Admin() {
 
   const dismissReport = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/admin/reports/${id}`, { headers })
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/reports/${id}`, { headers })
       fetchReports()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -106,8 +106,8 @@ function Admin() {
   const deleteReportedListing = async (listingId, reportId) => {
     if (!window.confirm('Delete this listing and dismiss the report?')) return
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/admin/listings/${listingId}`, { headers })
-      await axios.delete(`http://127.0.0.1:5000/api/admin/reports/${reportId}`, { headers })
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/listings/${listingId}`, { headers })
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/reports/${reportId}`, { headers })
       fetchReports()
       fetchListings()
       fetchStats()

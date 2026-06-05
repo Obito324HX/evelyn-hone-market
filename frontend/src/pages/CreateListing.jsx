@@ -81,7 +81,7 @@ function CreateListing() {
   const handleSubmit = async () => {
     if (!title || !price) { setError('Title and price are required.'); return }
     try {
-      await axios.post('http://127.0.0.1:5000/api/listings/', {
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/listings/', {
         title, description, price: parseFloat(price),
         category, listing_type: listingType,
         image: images[0] || null,

@@ -15,7 +15,7 @@ function Notifications() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/notifications/${user.user_id}`)
+      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${user.user_id}`)
       setNotifications(res.data)
     } catch (err) {
       console.error(err)
@@ -25,7 +25,7 @@ function Notifications() {
 
   const markRead = async (id) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/notifications/${id}/read`)
+      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${id}/read`)
       setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n))
     } catch (err) {
       console.error(err)
@@ -34,7 +34,7 @@ function Notifications() {
 
   const markAllRead = async () => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/notifications/${user.user_id}/read-all`)
+      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${user.user_id}/read-all`)
       setNotifications(prev => prev.map(n => ({...n, read: true})))
     } catch (err) {
       console.error(err)

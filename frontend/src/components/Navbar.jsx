@@ -16,7 +16,7 @@ function Navbar() {
 
   const checkNotifications = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/notifications/${user.user_id}`)
+      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${user.user_id}`)
       setUnreadCount(res.data.filter(n => !n.read).length)
     } catch (err) {
       console.error(err)

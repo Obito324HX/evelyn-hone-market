@@ -18,7 +18,7 @@ function Messages() {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/messages/${user.user_id}`)
+      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/messages/${user.user_id}`)
       setMessages(res.data)
     } catch (err) {
       console.error(err)
@@ -28,7 +28,7 @@ function Messages() {
   const sendMessage = async () => {
     if (!user || !content.trim()) return
     try {
-      await axios.post('http://127.0.0.1:5000/api/messages/', {
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/messages/', {
         content,
         sender_id: user.user_id,
         receiver_id: parseInt(sellerId),

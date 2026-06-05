@@ -20,7 +20,7 @@ function Profile() {
 
   const fetchMyListings = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/listings/')
+      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/listings/')
       const mine = res.data.filter(l => l.seller_id === user.user_id)
       setListings(mine)
     } catch (err) {
@@ -30,7 +30,7 @@ function Profile() {
 
   const deleteListing = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/listings/${id}`)
+      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/listings/${id}`)
       fetchMyListings()
     } catch (err) {
       console.error(err)
@@ -39,7 +39,7 @@ function Profile() {
 
   const updateStatus = async (id, status) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/listings/${id}/status`, { status })
+      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/listings/${id}/status`, { status })
       fetchMyListings()
     } catch (err) {
       console.error(err)
@@ -61,7 +61,7 @@ function Profile() {
     if (!studentId.trim()) return
     setSubmitting(true)
     try {
-      await axios.post('http://127.0.0.1:5000/api/auth/submit-student-id', {
+      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/auth/submit-student-id', {
         user_id: user.user_id,
         student_id: studentId
       })
