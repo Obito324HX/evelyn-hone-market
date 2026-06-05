@@ -1,0 +1,78 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a2e;
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  nav .hamburger {
+    display: block !important;
+  }
+  nav .links {
+    display: none;
+  }
+}
+
+/* Mobile Listings Grid */
+@media (max-width: 768px) {
+  .listings-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.8rem !important;
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .listings-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile Listing Detail */
+@media (max-width: 768px) {
+  .listing-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile Profile */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Touch targets */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #e94560;
+  border-radius: 3px;
+}
