@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
+const API = 'https://evelyn-hone-market-production.up.railway.app'
 const ADMIN_KEY = 'evelyn-hone-admin-2026'
 const headers = { 'X-Admin-Key': ADMIN_KEY }
 
@@ -14,6 +15,17 @@ function Admin() {
   const [password, setPassword] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
   const [error, setError] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMsg, setPasswordMsg] = useState('')
+  const [admins, setAdmins] = useState(() => {
+    const saved = localStorage.getItem('admin_accounts')
+    return saved ? JSON.parse(saved) : [{ username: 'Admin', password: 'admin2026' }]
+  })
+  const [newAdminName, setNewAdminName] = useState('')
+  const [newAdminPass, setNewAdminPass] = useState('')
+  const [adminMsg, setAdminMsg] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -26,7 +38,8 @@ function Admin() {
   }, [loggedIn])
 
   const handleLogin = () => {
-    if (password === 'admin2026') {
+    const found = admins.find(a => a.password === password)
+    if (found) {
       setLoggedIn(true)
       setError('')
     } else {
@@ -36,42 +49,42 @@ function Admin() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/stats', { headers })
+      const res = await axios.get(`${API}/api/admin/stats`, { headers })
       setStats(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/users', { headers })
+      const res = await axios.get(`${API}/api/admin/users`, { headers })
       setUsers(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchListings = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/listings', { headers })
+      const res = await axios.get(`${API}/api/admin/listings`, { headers })
       setListings(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchReports = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/admin/reports', { headers })
+      const res = await axios.get(`${API}/api/admin/reports`, { headers })
       setReports(res.data)
     } catch (err) { console.error(err) }
   }
 
   const verifyUser = async (id) => {
     try {
-      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}/verify`, {}, { headers })
+      await axios.put(`${API}/api/admin/users/${id}/verify`, {}, { headers })
       fetchUsers()
     } catch (err) { console.error(err) }
   }
 
   const approveSeller = async (id) => {
     try {
-      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}/approve-seller`, {}, { headers })
+      await axios.put(`${API}/api/admin/users/${id}/approve-seller`, {}, { headers })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -80,7 +93,7 @@ function Admin() {
   const deleteUser = async (id) => {
     if (!window.confirm('Delete this user?')) return
     try {
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/users/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/users/${id}`, { headers })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -89,7 +102,7 @@ function Admin() {
   const deleteListing = async (id) => {
     if (!window.confirm('Delete this listing?')) return
     try {
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/listings/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/listings/${id}`, { headers })
       fetchListings()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -97,7 +110,7 @@ function Admin() {
 
   const dismissReport = async (id) => {
     try {
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/reports/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/reports/${id}`, { headers })
       fetchReports()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -106,15 +119,58 @@ function Admin() {
   const deleteReportedListing = async (listingId, reportId) => {
     if (!window.confirm('Delete this listing and dismiss the report?')) return
     try {
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/listings/${listingId}`, { headers })
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/admin/reports/${reportId}`, { headers })
+      await axios.delete(`${API}/api/admin/listings/${listingId}`, { headers })
+      await axios.delete(`${API}/api/admin/reports/${reportId}`, { headers })
       fetchReports()
       fetchListings()
       fetchStats()
     } catch (err) { console.error(err) }
   }
 
+  const changePassword = () => {
+    if (!newPassword || newPassword !== confirmPassword) {
+      setPasswordMsg('❌ Passwords do not match!')
+      return
+    }
+    const updated = admins.map((a, i) => i === 0 ? { ...a, password: newPassword } : a)
+    setAdmins(updated)
+    localStorage.setItem('admin_accounts', JSON.stringify(updated))
+    setPasswordMsg('✅ Password changed successfully!')
+    setNewPassword('')
+    setConfirmPassword('')
+  }
+
+  const addAdmin = () => {
+    if (!newAdminName || !newAdminPass) {
+      setAdminMsg('❌ Please fill in both fields!')
+      return
+    }
+    const updated = [...admins, { username: newAdminName, password: newAdminPass }]
+    setAdmins(updated)
+    localStorage.setItem('admin_accounts', JSON.stringify(updated))
+    setAdminMsg(`✅ Admin "${newAdminName}" added!`)
+    setNewAdminName('')
+    setNewAdminPass('')
+  }
+
+  const removeAdmin = (index) => {
+    if (index === 0) { setAdminMsg('❌ Cannot remove the main admin!'); return }
+    const updated = admins.filter((_, i) => i !== index)
+    setAdmins(updated)
+    localStorage.setItem('admin_accounts', JSON.stringify(updated))
+    setAdminMsg('✅ Admin removed!')
+  }
+
   const pendingSellers = users.filter(u => u.student_id && !u.seller_approved)
+
+  const tabs = [
+    { key:'stats', label:'📊 Dashboard' },
+    { key:'sellers', label:`🏪 Sellers ${pendingSellers.length > 0 ? `(${pendingSellers.length})` : ''}` },
+    { key:'users', label:'👥 Users' },
+    { key:'listings', label:'📦 Listings' },
+    { key:'reports', label:`🚩 Reports ${reports.length > 0 ? `(${reports.length})` : ''}` },
+    { key:'settings', label:'⚙️ Settings' }
+  ]
 
   if (!loggedIn) return (
     <div style={styles.loginPage}>
@@ -123,14 +179,7 @@ function Admin() {
         <h2 style={styles.loginTitle}>Admin Panel</h2>
         <p style={styles.loginSubtitle}>Evelyn Hone Market</p>
         {error && <div style={styles.errorBox}>{error}</div>}
-        <input
-          style={styles.loginInput}
-          type="password"
-          placeholder="Enter admin password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleLogin()}
-        />
+        <input style={styles.loginInput} type="password" placeholder="Enter admin password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         <button style={styles.loginBtn} onClick={handleLogin}>Login as Admin</button>
         <button style={styles.backLink} onClick={() => navigate('/')}>← Back to Market</button>
       </div>
@@ -139,43 +188,38 @@ function Admin() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <h2 style={styles.sidebarTitle}>🛡 Admin</h2>
-          <p style={styles.sidebarSubtitle}>Evelyn Hone Market</p>
-        </div>
-        {[
-          { key:'stats', label:'📊 Dashboard' },
-          { key:'sellers', label:`🏪 Seller Requests ${pendingSellers.length > 0 ? `(${pendingSellers.length})` : ''}` },
-          { key:'users', label:'👥 Users' },
-          { key:'listings', label:'📦 Listings' },
-          { key:'reports', label:`🚩 Reports ${reports.length > 0 ? `(${reports.length})` : ''}` }
-        ].map(t => (
-          <button
-            key={t.key}
-            style={{...styles.sidebarBtn, ...(tab === t.key ? styles.activeSidebarBtn : {})}}
-            onClick={() => setTab(t.key)}
-          >{t.label}</button>
-        ))}
-        <button style={styles.logoutBtn} onClick={() => navigate('/')}>← Back to Market</button>
+      <div style={styles.topBar}>
+        <button style={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
+        <span style={styles.topBarTitle}>🛡 Admin Panel</span>
+        <button style={styles.backBtn} onClick={() => navigate('/')}>← Market</button>
       </div>
+      {sidebarOpen && (
+        <div style={styles.sidebar}>
+          {tabs.map(t => (
+            <button key={t.key} style={{...styles.sidebarBtn, ...(tab === t.key ? styles.activeSidebarBtn : {})}}
+              onClick={() => { setTab(t.key); setSidebarOpen(false) }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div style={styles.content}>
         {tab === 'stats' && stats && (
           <div>
             <h2 style={styles.pageTitle}>Dashboard</h2>
             {pendingSellers.length > 0 && (
               <div style={styles.alertBanner}>
-                ⚠️ {pendingSellers.length} seller request{pendingSellers.length > 1 ? 's' : ''} pending approval!
-                <button style={styles.alertBtn} onClick={() => setTab('sellers')}>Review Now</button>
+                ⚠️ {pendingSellers.length} seller request{pendingSellers.length > 1 ? 's' : ''} pending!
+                <button style={styles.alertBtn} onClick={() => setTab('sellers')}>Review</button>
               </div>
             )}
             <div style={styles.statsGrid}>
               {[
-                { icon:'👥', value: stats.total_users, label:'Total Users' },
-                { icon:'📦', value: stats.total_listings, label:'Total Listings' },
+                { icon:'👥', value: stats.total_users, label:'Users' },
+                { icon:'📦', value: stats.total_listings, label:'Listings' },
                 { icon:'💬', value: stats.total_messages, label:'Messages' },
                 { icon:'🚩', value: stats.total_reports, label:'Reports' },
-                { icon:'⏳', value: stats.pending_sellers, label:'Pending Sellers' },
+                { icon:'⏳', value: stats.pending_sellers, label:'Pending' },
                 { icon:'✅', value: stats.available, label:'Available' },
                 { icon:'🔒', value: stats.reserved, label:'Reserved' },
                 { icon:'💰', value: stats.sold, label:'Sold' },
@@ -193,31 +237,22 @@ function Admin() {
           <div>
             <h2 style={styles.pageTitle}>Seller Requests ({pendingSellers.length})</h2>
             {pendingSellers.length === 0 ? (
-              <div style={styles.emptyState}>
-                <div style={{fontSize:'3rem'}}>✅</div>
-                <p>No pending seller requests!</p>
-              </div>
+              <div style={styles.emptyState}><div style={{fontSize:'3rem'}}>✅</div><p>No pending requests!</p></div>
             ) : (
-              <div style={styles.sellerRequestsList}>
+              <div style={styles.cardList}>
                 {pendingSellers.map(u => (
-                  <div key={u.id} style={styles.sellerRequestCard}>
-                    <div style={styles.sellerRequestHeader}>
+                  <div key={u.id} style={styles.sellerCard}>
+                    <div style={styles.sellerInfo}>
                       <div style={styles.sellerAvatar}>{u.username[0].toUpperCase()}</div>
                       <div>
                         <p style={styles.sellerName}>{u.username}</p>
                         <p style={styles.sellerEmail}>{u.email}</p>
-                      </div>
-                      <div style={styles.studentIdBadge}>
-                        🎓 {u.student_id}
+                        <p style={styles.studentId}>🎓 {u.student_id}</p>
                       </div>
                     </div>
-                    <div style={styles.sellerRequestActions}>
-                      <button style={styles.approveBtn} onClick={() => approveSeller(u.id)}>
-                        ✅ Approve Seller
-                      </button>
-                      <button style={styles.rejectBtn} onClick={() => deleteUser(u.id)}>
-                        ❌ Reject & Delete
-                      </button>
+                    <div style={styles.sellerActions}>
+                      <button style={styles.approveBtn} onClick={() => approveSeller(u.id)}>✅ Approve</button>
+                      <button style={styles.rejectBtn} onClick={() => deleteUser(u.id)}>❌ Reject</button>
                     </div>
                   </div>
                 ))}
@@ -227,40 +262,29 @@ function Admin() {
         )}
         {tab === 'users' && (
           <div>
-            <h2 style={styles.pageTitle}>All Users ({users.length})</h2>
-            <div style={styles.table}>
-              <div style={{...styles.tableHeader, gridTemplateColumns:'0.3fr 0.8fr 1.2fr 0.8fr 0.8fr 0.8fr 1.2fr'}}>
-                <span>ID</span><span>Username</span><span>Email</span>
-                <span>Student ID</span><span>Verified</span><span>Seller</span><span>Actions</span>
-              </div>
+            <h2 style={styles.pageTitle}>Users ({users.length})</h2>
+            <div style={styles.cardList}>
               {users.map(u => (
-                <div key={u.id} style={{...styles.tableRow, gridTemplateColumns:'0.3fr 0.8fr 1.2fr 0.8fr 0.8fr 0.8fr 1.2fr'}}>
-                  <span style={styles.tableCell}>#{u.id}</span>
-                  <span style={styles.tableCell}>
-                    {u.username}
-                    {u.verified && <span style={styles.verifiedBadge}>✓</span>}
-                  </span>
-                  <span style={styles.tableCell}>{u.email}</span>
-                  <span style={styles.tableCell}>{u.student_id || '—'}</span>
-                  <span style={styles.tableCell}>
-                    <span style={{...styles.statusDot, background: u.verified ? '#27ae60' : '#aaa'}}></span>
-                    {u.verified ? 'Yes' : 'No'}
-                  </span>
-                  <span style={styles.tableCell}>
-                    <span style={{...styles.statusDot, background: u.seller_approved ? '#27ae60' : u.student_id ? '#f39c12' : '#aaa'}}></span>
-                    {u.seller_approved ? 'Approved' : u.student_id ? 'Pending' : 'No'}
-                  </span>
-                  <span style={styles.tableCell}>
-                    <button style={{...styles.actionBtn, background: u.verified ? '#f39c12' : '#27ae60'}} onClick={() => verifyUser(u.id)}>
+                <div key={u.id} style={styles.userCard}>
+                  <div style={styles.userInfo}>
+                    <div style={styles.userAvatar}>{u.username[0].toUpperCase()}</div>
+                    <div>
+                      <p style={styles.userName}>{u.username} {u.verified && <span style={styles.vBadge}>✓</span>}</p>
+                      <p style={styles.userEmail}>{u.email}</p>
+                      <p style={styles.userMeta}>ID: {u.student_id || '—'} | Seller: {u.seller_approved ? '✅' : u.student_id ? '⏳' : '❌'}</p>
+                    </div>
+                  </div>
+                  <div style={styles.userActions}>
+                    <button style={{...styles.smallBtn, background: u.verified ? '#f39c12' : '#27ae60'}} onClick={() => verifyUser(u.id)}>
                       {u.verified ? 'Unverify' : 'Verify'}
                     </button>
                     {u.student_id && (
-                      <button style={{...styles.actionBtn, background: u.seller_approved ? '#f39c12' : '#27ae60'}} onClick={() => approveSeller(u.id)}>
+                      <button style={{...styles.smallBtn, background: u.seller_approved ? '#f39c12' : '#27ae60'}} onClick={() => approveSeller(u.id)}>
                         {u.seller_approved ? 'Revoke' : 'Approve'}
                       </button>
                     )}
-                    <button style={{...styles.actionBtn, background:'#e94560'}} onClick={() => deleteUser(u.id)}>Del</button>
-                  </span>
+                    <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteUser(u.id)}>Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -269,26 +293,17 @@ function Admin() {
         {tab === 'listings' && (
           <div>
             <h2 style={styles.pageTitle}>Listings ({listings.length})</h2>
-            <div style={styles.table}>
-              <div style={{...styles.tableHeader, gridTemplateColumns:'0.5fr 1fr 0.8fr 1fr 0.8fr 0.5fr 0.8fr'}}>
-                <span>ID</span><span>Title</span><span>Price</span>
-                <span>Category</span><span>Status</span><span>Seller</span><span>Actions</span>
-              </div>
+            <div style={styles.cardList}>
               {listings.map(l => (
-                <div key={l.id} style={{...styles.tableRow, gridTemplateColumns:'0.5fr 1fr 0.8fr 1fr 0.8fr 0.5fr 0.8fr'}}>
-                  <span style={styles.tableCell}>#{l.id}</span>
-                  <span style={styles.tableCell}>{l.title}</span>
-                  <span style={styles.tableCell}>K{l.price}</span>
-                  <span style={styles.tableCell}>{l.category}</span>
-                  <span style={styles.tableCell}>
+                <div key={l.id} style={styles.listingCard}>
+                  <div>
+                    <p style={styles.listingTitle}>{l.title}</p>
+                    <p style={styles.listingMeta}>K{l.price} | {l.category} | Seller #{l.seller_id}</p>
                     <span style={{...styles.statusPill, background: l.status === 'available' ? '#27ae60' : l.status === 'reserved' ? '#f39c12' : '#333'}}>
                       {l.status}
                     </span>
-                  </span>
-                  <span style={styles.tableCell}>#{l.seller_id}</span>
-                  <span style={styles.tableCell}>
-                    <button style={{...styles.actionBtn, background:'#e94560'}} onClick={() => deleteListing(l.id)}>Delete</button>
-                  </span>
+                  </div>
+                  <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteListing(l.id)}>Delete</button>
                 </div>
               ))}
             </div>
@@ -298,30 +313,51 @@ function Admin() {
           <div>
             <h2 style={styles.pageTitle}>Reports ({reports.length})</h2>
             {reports.length === 0 ? (
-              <div style={styles.emptyState}>
-                <div style={{fontSize:'3rem'}}>✅</div>
-                <p>No reports at the moment. The marketplace is clean!</p>
-              </div>
+              <div style={styles.emptyState}><div style={{fontSize:'3rem'}}>✅</div><p>No reports!</p></div>
             ) : (
-              <div style={styles.reportsList}>
+              <div style={styles.cardList}>
                 {reports.map(r => (
                   <div key={r.id} style={styles.reportCard}>
-                    <div style={styles.reportCardHeader}>
-                      <span style={styles.reportBadge}>🚩 Report #{r.id}</span>
-                      <small style={{color:'#888'}}>{new Date(r.created_at).toLocaleDateString()}</small>
-                    </div>
-                    <div style={styles.reportDetails}>
-                      <p style={styles.reportReason}><strong>Reason:</strong> {r.reason}</p>
-                      <p style={styles.reportMeta}>Listing #{r.listing_id} reported by User #{r.reporter_id}</p>
-                    </div>
+                    <p style={styles.reportReason}><strong>{r.reason}</strong></p>
+                    <p style={styles.reportMeta}>Listing #{r.listing_id} by User #{r.reporter_id}</p>
+                    <p style={styles.reportDate}>{new Date(r.created_at).toLocaleDateString()}</p>
                     <div style={styles.reportActions}>
                       <button style={styles.dismissBtn} onClick={() => dismissReport(r.id)}>Dismiss</button>
-                      <button style={styles.deleteListingBtn} onClick={() => deleteReportedListing(r.listing_id, r.id)}>Delete Listing</button>
+                      <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteReportedListing(r.listing_id, r.id)}>Delete Listing</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+        {tab === 'settings' && (
+          <div>
+            <h2 style={styles.pageTitle}>⚙️ Settings</h2>
+            <div style={styles.settingsCard}>
+              <h3 style={styles.settingsTitle}>🔑 Change Password</h3>
+              <input style={styles.settingsInput} type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              <input style={styles.settingsInput} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+              <button style={styles.settingsBtn} onClick={changePassword}>Update Password</button>
+              {passwordMsg && <p style={styles.settingsMsg}>{passwordMsg}</p>}
+            </div>
+            <div style={styles.settingsCard}>
+              <h3 style={styles.settingsTitle}>👥 Admin Accounts</h3>
+              {admins.map((a, i) => (
+                <div key={i} style={styles.adminRow}>
+                  <span style={styles.adminName}>👤 {a.username}</span>
+                  {i > 0 && <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => removeAdmin(i)}>Remove</button>}
+                  {i === 0 && <span style={styles.mainAdminBadge}>Main Admin</span>}
+                </div>
+              ))}
+              <div style={styles.addAdminForm}>
+                <h4 style={styles.addAdminTitle}>Add New Admin</h4>
+                <input style={styles.settingsInput} type="text" placeholder="Admin name" value={newAdminName} onChange={e => setNewAdminName(e.target.value)} />
+                <input style={styles.settingsInput} type="password" placeholder="Admin password" value={newAdminPass} onChange={e => setNewAdminPass(e.target.value)} />
+                <button style={styles.settingsBtn} onClick={addAdmin}>Add Admin</button>
+                {adminMsg && <p style={styles.settingsMsg}>{adminMsg}</p>}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -330,8 +366,8 @@ function Admin() {
 }
 
 const styles = {
-  loginPage: { minHeight:'100vh', background:'#1a1a2e', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Arial, sans-serif' },
-  loginCard: { background:'white', borderRadius:'12px', padding:'2.5rem', width:'100%', maxWidth:'400px', textAlign:'center', boxShadow:'0 10px 30px rgba(0,0,0,0.3)' },
+  loginPage: { minHeight:'100vh', background:'#1a1a2e', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Arial, sans-serif', padding:'1rem' },
+  loginCard: { background:'white', borderRadius:'12px', padding:'2rem', width:'100%', maxWidth:'400px', textAlign:'center', boxShadow:'0 10px 30px rgba(0,0,0,0.3)' },
   loginIcon: { fontSize:'3rem', marginBottom:'1rem' },
   loginTitle: { color:'#1a1a2e', marginBottom:'0.3rem' },
   loginSubtitle: { color:'#888', marginBottom:'1.5rem', fontSize:'0.9rem' },
@@ -339,52 +375,63 @@ const styles = {
   loginInput: { width:'100%', padding:'0.9rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'1rem', boxSizing:'border-box', marginBottom:'1rem', color:'#1a1a2e', outline:'none' },
   loginBtn: { width:'100%', padding:'0.9rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem', marginBottom:'1rem' },
   backLink: { background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:'0.9rem' },
-  page: { display:'flex', minHeight:'100vh', fontFamily:'Arial, sans-serif' },
-  sidebar: { width:'240px', background:'#1a1a2e', padding:'1.5rem', display:'flex', flexDirection:'column', gap:'0.5rem' },
-  sidebarHeader: { marginBottom:'1.5rem', borderBottom:'1px solid rgba(255,255,255,0.1)', paddingBottom:'1rem' },
-  sidebarTitle: { color:'white', margin:0, fontSize:'1.2rem' },
-  sidebarSubtitle: { color:'#888', fontSize:'0.8rem', margin:0 },
-  sidebarBtn: { background:'transparent', color:'#ccc', border:'none', padding:'0.8rem 1rem', borderRadius:'8px', cursor:'pointer', textAlign:'left', fontSize:'0.9rem' },
+  page: { fontFamily:'Arial, sans-serif', minHeight:'100vh', background:'#f5f5f5' },
+  topBar: { background:'#1a1a2e', padding:'1rem 1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 },
+  menuBtn: { background:'none', border:'none', color:'white', fontSize:'1.5rem', cursor:'pointer', minWidth:'44px', minHeight:'44px' },
+  topBarTitle: { color:'white', fontWeight:'bold', fontSize:'1rem' },
+  backBtn: { background:'transparent', color:'#ccc', border:'1px solid #444', padding:'0.4rem 0.8rem', borderRadius:'6px', cursor:'pointer', fontSize:'0.85rem' },
+  sidebar: { background:'#1a1a2e', padding:'1rem', display:'flex', flexDirection:'column', gap:'0.3rem' },
+  sidebarBtn: { background:'transparent', color:'#ccc', border:'none', padding:'0.9rem 1rem', borderRadius:'8px', cursor:'pointer', textAlign:'left', fontSize:'0.95rem' },
   activeSidebarBtn: { background:'rgba(233,69,96,0.2)', color:'#e94560' },
-  logoutBtn: { background:'transparent', color:'#888', border:'1px solid #444', padding:'0.7rem', borderRadius:'8px', cursor:'pointer', marginTop:'auto', fontSize:'0.9rem' },
-  content: { flex:1, padding:'2rem', background:'#f5f5f5', overflowY:'auto' },
-  pageTitle: { color:'#1a1a2e', marginBottom:'1.5rem', fontSize:'1.5rem' },
-  alertBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1.5rem', color:'#856404', display:'flex', alignItems:'center', justifyContent:'space-between' },
-  alertBtn: { background:'#f39c12', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'6px', cursor:'pointer', fontWeight:'bold' },
-  statsGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:'1rem' },
-  statCard: { background:'white', borderRadius:'12px', padding:'1.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  statIcon: { fontSize:'2rem', marginBottom:'0.5rem' },
-  statNumber: { fontSize:'2rem', fontWeight:'bold', color:'#e94560' },
-  statLabel: { color:'#888', fontSize:'0.85rem', marginTop:'0.3rem' },
-  sellerRequestsList: { display:'flex', flexDirection:'column', gap:'1rem' },
-  sellerRequestCard: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  sellerRequestHeader: { display:'flex', alignItems:'center', gap:'1rem', marginBottom:'1rem' },
+  content: { padding:'1.5rem' },
+  pageTitle: { color:'#1a1a2e', marginBottom:'1.5rem', fontSize:'1.3rem' },
+  alertBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1.5rem', color:'#856404', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem' },
+  alertBtn: { background:'#f39c12', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'6px', cursor:'pointer', fontWeight:'bold', whiteSpace:'nowrap' },
+  statsGrid: { display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'1rem' },
+  statCard: { background:'white', borderRadius:'12px', padding:'1.2rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
+  statIcon: { fontSize:'1.8rem', marginBottom:'0.3rem' },
+  statNumber: { fontSize:'1.8rem', fontWeight:'bold', color:'#e94560' },
+  statLabel: { color:'#888', fontSize:'0.8rem', marginTop:'0.2rem' },
+  cardList: { display:'flex', flexDirection:'column', gap:'1rem' },
+  sellerCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
+  sellerInfo: { display:'flex', gap:'1rem', alignItems:'flex-start', marginBottom:'1rem' },
   sellerAvatar: { width:'44px', height:'44px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'1.2rem', flexShrink:0 },
-  sellerName: { color:'#1a1a2e', fontWeight:'bold', margin:0 },
-  sellerEmail: { color:'#888', fontSize:'0.85rem', margin:0 },
-  studentIdBadge: { marginLeft:'auto', background:'#f0f0f0', padding:'0.5rem 1rem', borderRadius:'8px', color:'#1a1a2e', fontWeight:'bold', fontSize:'0.9rem' },
-  sellerRequestActions: { display:'flex', gap:'1rem' },
-  approveBtn: { flex:1, padding:'0.8rem', background:'#27ae60', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  rejectBtn: { flex:1, padding:'0.8rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  table: { background:'white', borderRadius:'12px', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  tableHeader: { display:'grid', gap:'0.5rem', padding:'1rem 1.5rem', background:'#1a1a2e', color:'white', fontSize:'0.82rem', fontWeight:'bold' },
-  tableRow: { display:'grid', gap:'0.5rem', padding:'1rem 1.5rem', borderBottom:'1px solid #eee', alignItems:'center' },
-  tableCell: { color:'#444', fontSize:'0.82rem', display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'wrap' },
-  verifiedBadge: { background:'#27ae60', color:'white', padding:'0.1rem 0.4rem', borderRadius:'10px', fontSize:'0.7rem' },
-  statusDot: { width:'8px', height:'8px', borderRadius:'50%', display:'inline-block' },
+  sellerName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.2rem' },
+  sellerEmail: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
+  studentId: { color:'#1a1a2e', fontSize:'0.85rem', margin:0 },
+  sellerActions: { display:'flex', gap:'0.8rem' },
+  approveBtn: { flex:1, padding:'0.7rem', background:'#27ae60', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
+  rejectBtn: { flex:1, padding:'0.7rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
+  userCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
+  userInfo: { display:'flex', gap:'1rem', alignItems:'flex-start', marginBottom:'1rem' },
+  userAvatar: { width:'40px', height:'40px', borderRadius:'50%', background:'#1a1a2e', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', flexShrink:0 },
+  userName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.2rem', display:'flex', alignItems:'center', gap:'0.5rem' },
+  userEmail: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
+  userMeta: { color:'#555', fontSize:'0.8rem', margin:0 },
+  vBadge: { background:'#27ae60', color:'white', padding:'0.1rem 0.4rem', borderRadius:'10px', fontSize:'0.7rem' },
+  userActions: { display:'flex', gap:'0.5rem', flexWrap:'wrap' },
+  smallBtn: { color:'white', border:'none', padding:'0.4rem 0.8rem', borderRadius:'6px', cursor:'pointer', fontSize:'0.8rem', fontWeight:'bold' },
+  listingCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem' },
+  listingTitle: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.3rem' },
+  listingMeta: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.5rem' },
   statusPill: { color:'white', padding:'0.2rem 0.6rem', borderRadius:'20px', fontSize:'0.75rem' },
-  actionBtn: { color:'white', border:'none', padding:'0.3rem 0.5rem', borderRadius:'6px', cursor:'pointer', fontSize:'0.75rem', marginRight:'0.2rem' },
-  emptyState: { textAlign:'center', padding:'4rem', background:'white', borderRadius:'12px', color:'#888' },
-  reportsList: { display:'flex', flexDirection:'column', gap:'1rem' },
-  reportCard: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  reportCardHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem' },
-  reportBadge: { background:'#fff0f0', color:'#e94560', padding:'0.3rem 0.8rem', borderRadius:'20px', fontSize:'0.85rem', fontWeight:'bold' },
-  reportDetails: { marginBottom:'1rem' },
-  reportReason: { color:'#1a1a2e', marginBottom:'0.3rem' },
-  reportMeta: { color:'#888', fontSize:'0.85rem' },
-  reportActions: { display:'flex', gap:'1rem' },
-  dismissBtn: { padding:'0.6rem 1.2rem', background:'#f5f5f5', color:'#555', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  deleteListingBtn: { padding:'0.6rem 1.2rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' }
+  reportCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
+  reportReason: { color:'#1a1a2e', margin:'0 0 0.3rem' },
+  reportMeta: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
+  reportDate: { color:'#aaa', fontSize:'0.8rem', margin:'0 0 1rem' },
+  reportActions: { display:'flex', gap:'0.8rem' },
+  dismissBtn: { padding:'0.5rem 1rem', background:'#f5f5f5', color:'#555', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
+  emptyState: { textAlign:'center', padding:'3rem', background:'white', borderRadius:'12px', color:'#888' },
+  settingsCard: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'1rem' },
+  settingsTitle: { color:'#1a1a2e', marginBottom:'1rem', fontSize:'1rem' },
+  settingsInput: { width:'100%', padding:'0.8rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.95rem', boxSizing:'border-box', color:'#1a1a2e', marginBottom:'0.8rem' },
+  settingsBtn: { width:'100%', padding:'0.8rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
+  settingsMsg: { color:'#27ae60', fontSize:'0.85rem', marginTop:'0.5rem', textAlign:'center' },
+  adminRow: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.8rem 0', borderBottom:'1px solid #eee' },
+  adminName: { color:'#1a1a2e', fontSize:'0.95rem' },
+  mainAdminBadge: { background:'#e94560', color:'white', padding:'0.2rem 0.6rem', borderRadius:'20px', fontSize:'0.75rem' },
+  addAdminForm: { marginTop:'1rem', paddingTop:'1rem', borderTop:'1px solid #eee' },
+  addAdminTitle: { color:'#1a1a2e', marginBottom:'0.8rem', fontSize:'0.95rem' }
 }
 
 export default Admin
