@@ -68,7 +68,7 @@ function Profile() {
       const updated = { ...user, student_id: studentId }
       localStorage.setItem('user', JSON.stringify(updated))
       setUser(updated)
-      setSubmitMsg('✅ Student ID submitted! Awaiting admin approval to sell.')
+      setSubmitMsg('✅ Student ID submitted! Awaiting admin approval.')
     } catch (err) {
       setSubmitMsg('❌ Failed to submit. Try again.')
     }
@@ -89,95 +89,86 @@ function Profile() {
         <h2 style={styles.headerTitle}>MY PROFILE</h2>
       </div>
       <div style={styles.container}>
-        <div style={styles.leftColumn}>
-          <div style={styles.profileCard}>
-            <div style={styles.avatarWrapper}>
-              {profilePic ? (
-                <img src={profilePic} alt="profile" style={styles.avatarImg} />
-              ) : (
-                <div style={styles.avatar}>{user.username[0].toUpperCase()}</div>
-              )}
+        <div style={styles.profileCard}>
+          <div style={styles.avatarWrapper}>
+            {profilePic ? (
+              <img src={profilePic} alt="profile" style={styles.avatarImg} />
+            ) : (
+              <div style={styles.avatar}>{user.username[0].toUpperCase()}</div>
+            )}
+          </div>
+          <label style={styles.uploadBtn}>
+            📷 Upload Profile Pic
+            <input type="file" accept="image/*" onChange={handlePicUpload} style={{display:'none'}} />
+          </label>
+          <h2 style={styles.username}>{user.username}</h2>
+          {user.verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
+          <div style={styles.detailsBox}>
+            <div style={styles.detailRow}>
+              <span style={styles.detailLabel}>User ID</span>
+              <span style={styles.detailValue}>#{user.user_id}</span>
             </div>
-            <label style={styles.uploadBtn}>
-              📷 Upload Profile Pic
-              <input type="file" accept="image/*" onChange={handlePicUpload} style={{display:'none'}} />
-            </label>
-            <h2 style={styles.username}>{user.username}</h2>
-            {user.verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
-            <div style={styles.detailsBox}>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>User ID</span>
-                <span style={styles.detailValue}>#{user.user_id}</span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Institution</span>
-                <span style={styles.detailValue}>Evelyn Hone College</span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Seller Status</span>
-                <span style={{...styles.detailValue, color: user.seller_approved ? '#27ae60' : '#f39c12'}}>
-                  {user.seller_approved ? '✅ Approved' : user.student_id ? '⏳ Pending' : '❌ Not Applied'}
-                </span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Total Listings</span>
-                <span style={styles.detailValue}>{listings.length}</span>
-              </div>
+            <div style={styles.detailRow}>
+              <span style={styles.detailLabel}>Institution</span>
+              <span style={styles.detailValue}>Evelyn Hone College</span>
+            </div>
+            <div style={styles.detailRow}>
+              <span style={styles.detailLabel}>Seller Status</span>
+              <span style={{...styles.detailValue, color: user.seller_approved ? '#27ae60' : '#f39c12'}}>
+                {user.seller_approved ? '✅ Approved' : user.student_id ? '⏳ Pending' : '❌ Not Applied'}
+              </span>
+            </div>
+            <div style={styles.detailRow}>
+              <span style={styles.detailLabel}>Total Listings</span>
+              <span style={styles.detailValue}>{listings.length}</span>
             </div>
           </div>
-
-          {!user.seller_approved && (
-            <div style={styles.sellerCard}>
-              <h3 style={styles.sellerCardTitle}>🏪 Become a Seller</h3>
-              {user.student_id ? (
-                <div style={styles.pendingBox}>
-                  <p style={styles.pendingText}>⏳ Your student ID <strong>{user.student_id}</strong> has been submitted and is awaiting admin approval.</p>
-                </div>
-              ) : (
-                <>
-                  <p style={styles.sellerDesc}>Submit your student ID to get approved as a seller and start listing items.</p>
-                  <input
-                    style={styles.studentIdInput}
-                    type="text"
-                    placeholder="Enter your Student ID (e.g. 2023/EHC/001)"
-                    value={studentId}
-                    onChange={e => setStudentId(e.target.value)}
-                  />
-                  <button
-                    style={styles.submitIdBtn}
-                    onClick={submitStudentId}
-                    disabled={submitting || !studentId.trim()}
-                  >
-                    {submitting ? 'Submitting...' : 'Submit Student ID'}
-                  </button>
-                  {submitMsg && <p style={styles.submitMsg}>{submitMsg}</p>}
-                </>
-              )}
-            </div>
-          )}
         </div>
+
+        {!user.seller_approved && (
+          <div style={styles.sellerCard}>
+            <h3 style={styles.sellerCardTitle}>🏪 Become a Seller</h3>
+            {user.student_id ? (
+              <div style={styles.pendingBox}>
+                <p style={styles.pendingText}>⏳ Your student ID <strong>{user.student_id}</strong> has been submitted and is awaiting admin approval.</p>
+              </div>
+            ) : (
+              <>
+                <p style={styles.sellerDesc}>Submit your student ID to get approved as a seller.</p>
+                <input
+                  style={styles.studentIdInput}
+                  type="text"
+                  placeholder="Enter your Student ID (e.g. 2023/EHC/001)"
+                  value={studentId}
+                  onChange={e => setStudentId(e.target.value)}
+                />
+                <button style={styles.submitIdBtn} onClick={submitStudentId} disabled={submitting || !studentId.trim()}>
+                  {submitting ? 'Submitting...' : 'Submit Student ID'}
+                </button>
+                {submitMsg && <p style={styles.submitMsg}>{submitMsg}</p>}
+              </>
+            )}
+          </div>
+        )}
 
         <div style={styles.listingsSection}>
           <div style={styles.sectionHeader}>
             <h3 style={styles.sectionTitle}>MY LISTINGS</h3>
             {user.seller_approved ? (
-              <button style={styles.newBtn} onClick={() => navigate('/create-listing')}>+ New Listing</button>
+              <button style={styles.newBtn} onClick={() => navigate('/create-listing')}>+ New</button>
             ) : (
               <span style={styles.notApprovedNote}>Get approved to sell</span>
             )}
           </div>
           {!user.seller_approved && (
             <div style={styles.notApprovedBanner}>
-              🔒 You need seller approval to post listings. Submit your student ID on the left to get started.
+              🔒 Submit your student ID above to start selling.
             </div>
           )}
           {listings.length === 0 ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>📦</div>
-              <p style={styles.emptyText}>You have no listings yet.</p>
-              {user.seller_approved && (
-                <button style={styles.newBtn} onClick={() => navigate('/create-listing')}>Create your first listing</button>
-              )}
+              <p style={styles.emptyText}>No listings yet.</p>
             </div>
           ) : (
             <div style={styles.grid}>
@@ -212,14 +203,13 @@ function Profile() {
 
 const styles = {
   page: { fontFamily:'Arial, sans-serif', minHeight:'100vh', background:'#f0f0f0' },
-  header: { background:'#e94560', padding:'1rem 2rem' },
-  headerTitle: { color:'white', margin:0, fontSize:'1.2rem', letterSpacing:'2px' },
-  container: { maxWidth:'1100px', margin:'2rem auto', padding:'0 1rem', display:'grid', gridTemplateColumns:'300px 1fr', gap:'2rem' },
-  leftColumn: { display:'flex', flexDirection:'column', gap:'1rem' },
-  profileCard: { background:'white', borderRadius:'12px', padding:'2rem', textAlign:'center', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
+  header: { background:'#e94560', padding:'1rem 1.5rem' },
+  headerTitle: { color:'white', margin:0, fontSize:'1.1rem', letterSpacing:'2px' },
+  container: { maxWidth:'1100px', margin:'1rem auto', padding:'0 1rem', display:'flex', flexDirection:'column', gap:'1rem' },
+  profileCard: { background:'white', borderRadius:'12px', padding:'1.5rem', textAlign:'center', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
   avatarWrapper: { marginBottom:'1rem' },
-  avatarImg: { width:'120px', height:'120px', borderRadius:'50%', objectFit:'cover', border:'4px solid #e94560' },
-  avatar: { width:'120px', height:'120px', borderRadius:'50%', background:'#e94560', color:'white', fontSize:'3rem', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto', border:'4px solid #1a1a2e' },
+  avatarImg: { width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:'4px solid #e94560' },
+  avatar: { width:'100px', height:'100px', borderRadius:'50%', background:'#e94560', color:'white', fontSize:'2.5rem', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto', border:'4px solid #1a1a2e' },
   uploadBtn: { display:'inline-block', background:'#e94560', color:'white', padding:'0.6rem 1.2rem', borderRadius:'8px', cursor:'pointer', marginBottom:'1rem', fontSize:'0.85rem' },
   username: { color:'#1a1a2e', marginBottom:'0.5rem', fontSize:'1.3rem' },
   verifiedBadge: { background:'#27ae60', color:'white', padding:'0.2rem 0.8rem', borderRadius:'20px', fontSize:'0.8rem', fontWeight:'bold', display:'inline-block', marginBottom:'1rem' },
@@ -235,27 +225,27 @@ const styles = {
   submitMsg: { color:'#27ae60', fontSize:'0.85rem', marginTop:'0.5rem', textAlign:'center' },
   pendingBox: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem' },
   pendingText: { color:'#856404', fontSize:'0.85rem', margin:0 },
-  listingsSection: { background:'white', borderRadius:'12px', padding:'2rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem', borderBottom:'2px solid #e94560', paddingBottom:'0.5rem' },
-  sectionTitle: { color:'#1a1a2e', margin:0, letterSpacing:'1px' },
-  newBtn: { background:'#1a1a2e', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'8px', cursor:'pointer' },
+  listingsSection: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
+  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', borderBottom:'2px solid #e94560', paddingBottom:'0.5rem' },
+  sectionTitle: { color:'#1a1a2e', margin:0, fontSize:'1rem', letterSpacing:'1px' },
+  newBtn: { background:'#1a1a2e', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'8px', cursor:'pointer', fontSize:'0.9rem' },
   notApprovedNote: { color:'#f39c12', fontSize:'0.85rem', fontWeight:'bold' },
-  notApprovedBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1.5rem', color:'#856404', fontSize:'0.9rem' },
-  emptyState: { textAlign:'center', padding:'3rem' },
-  emptyIcon: { fontSize:'3rem', marginBottom:'1rem' },
-  emptyText: { color:'#888', marginBottom:'1rem' },
-  grid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:'1rem' },
+  notApprovedBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1rem', color:'#856404', fontSize:'0.85rem' },
+  emptyState: { textAlign:'center', padding:'2rem' },
+  emptyIcon: { fontSize:'2.5rem', marginBottom:'0.5rem' },
+  emptyText: { color:'#888' },
+  grid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:'1rem' },
   card: { background:'#f9f9f9', borderRadius:'12px', overflow:'hidden', border:'1px solid #eee' },
   cardImage: { width:'100%', aspectRatio:'16/9', objectFit:'cover' },
-  cardBody: { padding:'1rem' },
-  cardHeader: { display:'flex', justifyContent:'space-between', marginBottom:'0.5rem' },
-  category: { background:'#1a1a2e', color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.75rem' },
-  statusBadge: { color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.75rem' },
-  cardTitle: { color:'#1a1a2e', marginBottom:'0.3rem', fontSize:'0.95rem' },
-  price: { color:'#e94560', fontWeight:'bold', marginBottom:'0.8rem' },
-  statusBtns: { display:'flex', gap:'0.3rem', marginBottom:'0.8rem' },
-  statusBtn: { flex:1, padding:'0.3rem', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'0.75rem', fontWeight:'bold' },
-  deleteBtn: { width:'100%', padding:'0.5rem', background:'#fff0f0', color:'#e94560', border:'1px solid #e94560', borderRadius:'8px', cursor:'pointer', fontSize:'0.85rem' }
+  cardBody: { padding:'0.8rem' },
+  cardHeader: { display:'flex', justifyContent:'space-between', marginBottom:'0.5rem', flexWrap:'wrap', gap:'0.3rem' },
+  category: { background:'#1a1a2e', color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.7rem' },
+  statusBadge: { color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.7rem' },
+  cardTitle: { color:'#1a1a2e', marginBottom:'0.3rem', fontSize:'0.9rem' },
+  price: { color:'#e94560', fontWeight:'bold', marginBottom:'0.8rem', fontSize:'0.95rem' },
+  statusBtns: { display:'flex', gap:'0.2rem', marginBottom:'0.5rem' },
+  statusBtn: { flex:1, padding:'0.3rem', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'0.65rem', fontWeight:'bold' },
+  deleteBtn: { width:'100%', padding:'0.5rem', background:'#fff0f0', color:'#e94560', border:'1px solid #e94560', borderRadius:'8px', cursor:'pointer', fontSize:'0.8rem' }
 }
 
 export default Profile
