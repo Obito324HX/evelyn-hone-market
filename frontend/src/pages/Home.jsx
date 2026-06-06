@@ -1,6 +1,28 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+
+const API = 'https://evelyn-hone-market-production.up.railway.app'
 
 function Home() {
+  const [trending, setTrending] = useState([])
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchTrending()
+  }, [])
+
+  const fetchTrending = async () => {
+    try {
+      const res = await axios.get(`${API}/api/listings/`)
+      const available = res.data.filter(l => l.status === 'available')
+      const shuffled = available.sort(() => 0.5 - Math.random()).slice(0, 4)
+      setTrending(shuffled)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const categories = [
     { name: 'Electronics', icon: '💻' },
     { name: 'Textbooks', icon: '📚' },
@@ -22,14 +44,16 @@ function Home() {
           </div>
         </div>
       </div>
+
       <div style={styles.statsBar}>
-        <div style={styles.stat}>🛍 Campus Only</div>
+        <div style={styles.stat}>🏫 Campus Only</div>
         <div style={styles.stat}>💬 Direct Messaging</div>
         <div style={styles.stat}>⭐ Seller Ratings</div>
         <div style={styles.stat}>🔒 Safe & Trusted</div>
       </div>
-      <div style={styles.categories}>
-        <h2 style={styles.catTitle}>Browse by Category</h2>
+
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>Browse by Category</h2>
         <div style={styles.catGrid}>
           {categories.map(cat => (
             <Link to={`/listings?category=${cat.name}`} key={cat.name} style={styles.catCard}>
@@ -39,29 +63,56 @@ function Home() {
           ))}
         </div>
       </div>
-      <div style={styles.howItWorks}>
-        <h2 style={styles.catTitle}>How It Works</h2>
-        <div style={styles.stepsGrid}>
-          <div style={styles.step}>
-            <div style={styles.stepIcon}>1</div>
-            <h3 style={styles.stepTitle}>Create Account</h3>
-            <p style={styles.stepText}>Sign up with your details to join the campus marketplace</p>
+
+      {trending.length > 0 && (
+        <div style={styles.section}>
+          <div style={styles.sectionHeader}>
+            <h2 style={styles.sectionTitle}>🔥 Trending Now</h2>
+            <Link to="/listings" style={styles.seeAll}>See all →</Link>
           </div>
-          <div style={styles.step}>
-            <div style={styles.stepIcon}>2</div>
-            <h3 style={styles.stepTitle}>Post or Browse</h3>
-            <p style={styles.stepText}>List items you want to sell or browse what others are offering</p>
-          </div>
-          <div style={styles.step}>
-            <div style={styles.stepIcon}>3</div>
-            <h3 style={styles.stepTitle}>Connect & Deal</h3>
-            <p style={styles.stepText}>Message the seller, agree on a price and meet on campus</p>
+          <div style={styles.trendingGrid}>
+            {trending.map(listing => (
+              <div key={listing.id} style={styles.trendingCard} onClick={() => navigate(`/listings/${listing.id}`)}>
+                {listing.image ? (
+                  <img src={listing.image} alt={listing.title} style={styles.trendingImg} />
+                ) : (
+                  <div style={styles.trendingNoImg}>📷</div>
+                )}
+                <div style={styles.trendingBody}>
+                  <p style={styles.trendingTitle}>{listing.title}</p>
+                  <p style={styles.trendingPrice}>K{listing.price}</p>
+                  <div style={styles.trendingSeller}>
+                    <span style={styles.sellerDot}>{listing.seller_username?.[0]?.toUpperCase()}</span>
+                    <span style={styles.sellerName}>{listing.seller_username}</span>
+                    {listing.seller_verified && <span style={styles.vBadge}>✓</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      )}
+
+      <div style={styles.howSection}>
+        <h2 style={styles.sectionTitle}>How It Works</h2>
+        <div style={styles.stepsGrid}>
+          {[
+            { num:'1', title:'Create Account', text:'Sign up to join the campus marketplace' },
+            { num:'2', title:'Post or Browse', text:'List items or browse what others are offering' },
+            { num:'3', title:'Connect & Deal', text:'Message the seller and meet on campus' }
+          ].map((step, i) => (
+            <div key={i} style={styles.step}>
+              <div style={styles.stepNum}>{step.num}</div>
+              <h3 style={styles.stepTitle}>{step.title}</h3>
+              <p style={styles.stepText}>{step.text}</p>
+            </div>
+          ))}
+        </div>
       </div>
+
       <div style={styles.footer}>
         <p style={styles.footerText}>🌱 Promoting sustainability and reducing waste on campus</p>
-        <p style={styles.footerSub}>Evelyn Hone College © 2026</p>
+        <p style={styles.footerSub}>Evelyn Hone College Market © 2026</p>
       </div>
     </div>
   )
@@ -69,30 +120,43 @@ function Home() {
 
 const styles = {
   container: { fontFamily:'Arial, sans-serif' },
-  hero: { background:'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', color:'white', padding:'4rem 1.5rem', textAlign:'center' },
+  hero: { background:'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', color:'white', padding:'3rem 1.5rem', textAlign:'center' },
   heroContent: { maxWidth:'600px', margin:'0 auto' },
-  title: { fontSize:'clamp(1.5rem, 5vw, 2.5rem)', marginBottom:'1rem', color:'#e94560', lineHeight:'1.2' },
-  subtitle: { fontSize:'clamp(0.9rem, 3vw, 1.2rem)', marginBottom:'2rem', color:'#ccc', lineHeight:'1.6' },
+  title: { fontSize:'clamp(1.4rem, 5vw, 2.5rem)', marginBottom:'1rem', color:'#e94560', lineHeight:'1.2' },
+  subtitle: { fontSize:'clamp(0.9rem, 3vw, 1.1rem)', marginBottom:'2rem', color:'#ccc', lineHeight:'1.6' },
   buttons: { display:'flex', gap:'1rem', justifyContent:'center', flexWrap:'wrap' },
-  primaryBtn: { background:'#e94560', color:'white', padding:'0.8rem 1.5rem', borderRadius:'8px', textDecoration:'none', fontWeight:'bold', fontSize:'clamp(0.85rem, 2.5vw, 1rem)' },
-  secondaryBtn: { background:'transparent', color:'white', padding:'0.8rem 1.5rem', borderRadius:'8px', textDecoration:'none', border:'2px solid white', fontSize:'clamp(0.85rem, 2.5vw, 1rem)' },
-  statsBar: { background:'#e94560', color:'white', padding:'1rem', display:'flex', justifyContent:'center', gap:'1.5rem', flexWrap:'wrap', fontSize:'clamp(0.75rem, 2vw, 0.9rem)' },
-  stat: { fontWeight:'bold' },
-  categories: { padding:'3rem 1.5rem', textAlign:'center', maxWidth:'900px', margin:'0 auto' },
-  catTitle: { fontSize:'clamp(1.2rem, 4vw, 1.8rem)', marginBottom:'2rem', color:'#1a1a2e' },
-  catGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(120px, 1fr))', gap:'1rem' },
-  catCard: { background:'#1a1a2e', color:'white', padding:'1.2rem 0.8rem', borderRadius:'12px', textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem', transition:'transform 0.2s' },
-  catIcon: { fontSize:'2rem' },
-  catName: { fontSize:'0.85rem', fontWeight:'bold' },
-  howItWorks: { padding:'3rem 1.5rem', background:'#f9f9f9', textAlign:'center' },
-  stepsGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:'2rem', maxWidth:'900px', margin:'0 auto' },
-  step: { background:'white', padding:'2rem 1.5rem', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  stepIcon: { width:'50px', height:'50px', borderRadius:'50%', background:'#e94560', color:'white', fontSize:'1.5rem', fontWeight:'bold', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 1rem' },
-  stepTitle: { color:'#1a1a2e', marginBottom:'0.5rem', fontSize:'1rem' },
-  stepText: { color:'#888', fontSize:'0.85rem', lineHeight:'1.6' },
-  footer: { background:'#1a1a2e', color:'white', padding:'2rem', textAlign:'center' },
-  footerText: { color:'#ccc', marginBottom:'0.5rem' },
-  footerSub: { color:'#666', fontSize:'0.85rem' }
+  primaryBtn: { background:'#e94560', color:'white', padding:'0.8rem 1.5rem', borderRadius:'8px', textDecoration:'none', fontWeight:'bold', fontSize:'0.95rem' },
+  secondaryBtn: { background:'transparent', color:'white', padding:'0.8rem 1.5rem', borderRadius:'8px', textDecoration:'none', border:'2px solid white', fontSize:'0.95rem' },
+  statsBar: { background:'#e94560', color:'white', padding:'0.8rem 1rem', display:'flex', justifyContent:'center', gap:'1rem', flexWrap:'wrap', fontSize:'0.8rem', fontWeight:'bold' },
+  stat: {},
+  section: { padding:'2rem 1.5rem', maxWidth:'900px', margin:'0 auto' },
+  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' },
+  sectionTitle: { fontSize:'clamp(1.1rem, 4vw, 1.6rem)', color:'#1a1a2e', marginBottom:'1.5rem' },
+  seeAll: { color:'#e94560', textDecoration:'none', fontSize:'0.9rem', fontWeight:'bold' },
+  catGrid: { display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'0.8rem' },
+  catCard: { background:'#1a1a2e', color:'white', padding:'1rem 0.5rem', borderRadius:'12px', textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem' },
+  catIcon: { fontSize:'1.8rem' },
+  catName: { fontSize:'0.8rem', fontWeight:'bold' },
+  trendingGrid: { display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'1rem' },
+  trendingCard: { background:'white', borderRadius:'12px', overflow:'hidden', boxShadow:'0 4px 15px rgba(0,0,0,0.08)', cursor:'pointer' },
+  trendingImg: { width:'100%', aspectRatio:'16/9', objectFit:'cover', display:'block' },
+  trendingNoImg: { width:'100%', aspectRatio:'16/9', background:'#f5f5f5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2rem' },
+  trendingBody: { padding:'0.8rem' },
+  trendingTitle: { color:'#1a1a2e', fontWeight:'bold', fontSize:'0.9rem', marginBottom:'0.3rem', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
+  trendingPrice: { color:'#e94560', fontWeight:'bold', fontSize:'1rem', marginBottom:'0.5rem' },
+  trendingSeller: { display:'flex', alignItems:'center', gap:'0.4rem' },
+  sellerDot: { width:'20px', height:'20px', borderRadius:'50%', background:'#1a1a2e', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.65rem', fontWeight:'bold' },
+  sellerName: { color:'#888', fontSize:'0.75rem' },
+  vBadge: { background:'#27ae60', color:'white', padding:'0.1rem 0.3rem', borderRadius:'10px', fontSize:'0.65rem' },
+  howSection: { padding:'2rem 1.5rem', background:'#f9f9f9', textAlign:'center' },
+  stepsGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:'1.5rem', maxWidth:'900px', margin:'0 auto' },
+  step: { background:'white', padding:'1.5rem', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
+  stepNum: { width:'44px', height:'44px', borderRadius:'50%', background:'#e94560', color:'white', fontSize:'1.3rem', fontWeight:'bold', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 1rem' },
+  stepTitle: { color:'#1a1a2e', marginBottom:'0.5rem', fontSize:'0.95rem' },
+  stepText: { color:'#888', fontSize:'0.82rem', lineHeight:'1.6' },
+  footer: { background:'#1a1a2e', color:'white', padding:'1.5rem', textAlign:'center' },
+  footerText: { color:'#ccc', marginBottom:'0.5rem', fontSize:'0.9rem' },
+  footerSub: { color:'#666', fontSize:'0.8rem' }
 }
 
 export default Home
