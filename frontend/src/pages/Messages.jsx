@@ -68,6 +68,13 @@ function Messages() {
     }
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
   const getConvoMessages = () => {
     if (!selectedConvo) return []
     return messages.filter(m =>
@@ -79,8 +86,8 @@ function Messages() {
   if (!user) return (
     <div style={styles.notLoggedIn}>
       <div style={styles.emptyIcon}>🔒</div>
-      <h3 style={styles.emptyTitle}>Please login to view messages</h3>
-      <button style={styles.loginBtn} onClick={() => navigate('/login')}>Go to Login</button>
+      <h3>Please login to view messages</h3>
+      <button style={styles.loginBtn} onClick={() => navigate('/login')}>Login</button>
     </div>
   )
 
@@ -92,13 +99,12 @@ function Messages() {
         <div style={styles.container}>
           <div style={styles.header}>
             <h2 style={styles.title}>Messages</h2>
-            <span style={styles.count}>{messages.length} total</span>
           </div>
           {conversations.length === 0 ? (
             <div style={styles.emptyState}>
               <div style={styles.emptyIcon}>💬</div>
               <h3 style={styles.emptyTitle}>No messages yet</h3>
-              <p style={styles.emptyText}>Browse listings and contact a seller to start a conversation!</p>
+              <p style={styles.emptyText}>Contact a seller from a listing to start chatting!</p>
               <button style={styles.browseBtn} onClick={() => navigate('/listings')}>Browse Listings</button>
             </div>
           ) : (
@@ -108,10 +114,9 @@ function Messages() {
                   <div style={styles.convoAvatar}>{convo.other_id}</div>
                   <div style={styles.convoInfo}>
                     <p style={styles.convoName}>User #{convo.other_id}</p>
-                    <p style={styles.convoLast}>{convo.lastMsg.content.substring(0, 50)}...</p>
-                    <small style={styles.convoTime}>{new Date(convo.lastMsg.created_at).toLocaleString()}</small>
+                    <p style={styles.convoLast}>{convo.lastMsg.content.substring(0, 40)}{convo.lastMsg.content.length > 40 ? '...' : ''}</p>
                   </div>
-                  <span style={styles.convoArrow}>›</span>
+                  <small style={styles.convoTime}>{new Date(convo.lastMsg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
                 </div>
               ))}
             </div>
@@ -120,32 +125,36 @@ function Messages() {
       ) : (
         <div style={styles.chatPage}>
           <div style={styles.chatHeader}>
-            <button style={styles.backBtn} onClick={() => setSelectedConvo(null)}>← Back</button>
+            <button style={styles.backBtn} onClick={() => setSelectedConvo(null)}>‹</button>
+            <div style={styles.chatHeaderAvatar}>{selectedConvo.other_id}</div>
             <span style={styles.chatTitle}>User #{selectedConvo.other_id}</span>
           </div>
           <div style={styles.chatMessages}>
             {convoMessages.length === 0 ? (
-              <div style={styles.noMsgs}>
-                <p>No messages yet. Send the first one!</p>
-              </div>
+              <div style={styles.noMsgs}><p>Send the first message!</p></div>
             ) : (
               convoMessages.map(msg => (
-                <div key={msg.id} style={msg.sender_id === user.user_id ? styles.sentMsg : styles.receivedMsg}>
-                  <p style={styles.msgContent}>{msg.content}</p>
-                  <small style={styles.msgTime}>{new Date(msg.created_at).toLocaleTimeString()}</small>
+                <div key={msg.id} style={msg.sender_id === user.user_id ? styles.sentWrapper : styles.receivedWrapper}>
+                  <div style={msg.sender_id === user.user_id ? styles.sentMsg : styles.receivedMsg}>
+                    <p style={styles.msgContent}>{msg.content}</p>
+                  </div>
+                  <small style={styles.msgTime}>{new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
                 </div>
               ))
             )}
           </div>
           <div style={styles.chatInput}>
-            <textarea
-              style={styles.textarea}
-              placeholder="Type a message..."
+            <input
+              style={styles.inputField}
+              type="text"
+              placeholder="Message..."
               value={content}
               onChange={e => setContent(e.target.value)}
-              rows={2}
+              onKeyDown={handleKeyDown}
             />
-            <button style={styles.sendBtn} onClick={sendMessage}>Send</button>
+            <button style={{...styles.sendBtn, opacity: content.trim() ? 1 : 0.5}} onClick={sendMessage}>
+              ➤
+            </button>
           </div>
         </div>
       )}
@@ -155,35 +164,36 @@ function Messages() {
 
 const styles = {
   page: { minHeight:'100vh', background:'#f5f5f5', fontFamily:'Arial, sans-serif' },
-  container: { maxWidth:'700px', margin:'0 auto', padding:'1.5rem' },
-  header: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' },
+  container: { maxWidth:'700px', margin:'0 auto', padding:'1rem' },
+  header: { marginBottom:'1rem' },
   title: { color:'#1a1a2e', fontSize:'1.5rem', margin:0 },
-  count: { background:'#e94560', color:'white', padding:'0.3rem 0.8rem', borderRadius:'20px', fontSize:'0.85rem' },
-  convoList: { display:'flex', flexDirection:'column', gap:'0.8rem' },
-  convoCard: { background:'white', borderRadius:'12px', padding:'1rem', display:'flex', alignItems:'center', gap:'1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', cursor:'pointer' },
-  convoAvatar: { width:'44px', height:'44px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', flexShrink:0 },
-  convoInfo: { flex:1 },
-  convoName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.3rem' },
-  convoLast: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
-  convoTime: { color:'#aaa', fontSize:'0.75rem' },
-  convoArrow: { color:'#888', fontSize:'1.5rem' },
-  chatPage: { display:'flex', flexDirection:'column', height:'100vh' },
-  chatHeader: { background:'#1a1a2e', padding:'1rem 1.5rem', display:'flex', alignItems:'center', gap:'1rem', position:'sticky', top:0 },
-  backBtn: { background:'none', border:'none', color:'white', fontSize:'1rem', cursor:'pointer', padding:'0.3rem' },
-  chatTitle: { color:'white', fontWeight:'bold' },
-  chatMessages: { flex:1, padding:'1rem', display:'flex', flexDirection:'column', gap:'0.8rem', overflowY:'auto', paddingBottom:'100px' },
-  noMsgs: { textAlign:'center', color:'#888', padding:'2rem' },
-  sentMsg: { background:'#e94560', color:'white', padding:'0.8rem 1rem', borderRadius:'12px 12px 4px 12px', alignSelf:'flex-end', maxWidth:'75%' },
-  receivedMsg: { background:'white', padding:'0.8rem 1rem', borderRadius:'12px 12px 12px 4px', alignSelf:'flex-start', maxWidth:'75%', boxShadow:'0 2px 5px rgba(0,0,0,0.08)' },
-  msgContent: { margin:'0 0 0.3rem', lineHeight:'1.4' },
-  msgTime: { opacity:0.7, fontSize:'0.72rem' },
-  chatInput: { position:'fixed', bottom:'70px', left:0, right:0, background:'white', padding:'0.8rem 1rem', display:'flex', gap:'0.8rem', boxShadow:'0 -2px 8px rgba(0,0,0,0.1)', alignItems:'flex-end' },
-  textarea: { flex:1, padding:'0.7rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.95rem', resize:'none', color:'#1a1a2e', outline:'none' },
-  sendBtn: { background:'#e94560', color:'white', border:'none', padding:'0.7rem 1.2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', whiteSpace:'nowrap' },
-  emptyState: { textAlign:'center', padding:'3rem 1rem', background:'white', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  emptyIcon: { fontSize:'3.5rem', marginBottom:'1rem' },
-  emptyTitle: { color:'#1a1a2e', fontSize:'1.2rem', marginBottom:'0.5rem' },
-  emptyText: { color:'#888', marginBottom:'1.5rem', lineHeight:'1.6' },
+  convoList: { display:'flex', flexDirection:'column', gap:'0.2rem' },
+  convoCard: { background:'white', padding:'0.9rem 1rem', display:'flex', alignItems:'center', gap:'0.9rem', cursor:'pointer', borderBottom:'1px solid #f0f0f0' },
+  convoAvatar: { width:'48px', height:'48px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'1rem', flexShrink:0 },
+  convoInfo: { flex:1, minWidth:0 },
+  convoName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.2rem', fontSize:'0.95rem' },
+  convoLast: { color:'#888', fontSize:'0.82rem', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
+  convoTime: { color:'#aaa', fontSize:'0.72rem', flexShrink:0 },
+  chatPage: { display:'flex', flexDirection:'column', height:'100vh', background:'#f0f2f5' },
+  chatHeader: { background:'white', padding:'0.7rem 1rem', display:'flex', alignItems:'center', gap:'0.8rem', boxShadow:'0 1px 4px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:10 },
+  backBtn: { background:'none', border:'none', color:'#e94560', fontSize:'1.8rem', cursor:'pointer', padding:'0', lineHeight:1 },
+  chatHeaderAvatar: { width:'36px', height:'36px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'0.9rem' },
+  chatTitle: { color:'#1a1a2e', fontWeight:'bold', fontSize:'1rem' },
+  chatMessages: { flex:1, padding:'1rem', display:'flex', flexDirection:'column', gap:'0.4rem', overflowY:'auto', paddingBottom:'80px' },
+  noMsgs: { textAlign:'center', color:'#888', padding:'2rem', fontSize:'0.9rem' },
+  sentWrapper: { display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.1rem' },
+  receivedWrapper: { display:'flex', flexDirection:'column', alignItems:'flex-start', gap:'0.1rem' },
+  sentMsg: { background:'#e94560', color:'white', padding:'0.6rem 0.9rem', borderRadius:'18px 18px 4px 18px', maxWidth:'75%' },
+  receivedMsg: { background:'white', color:'#1a1a2e', padding:'0.6rem 0.9rem', borderRadius:'18px 18px 18px 4px', maxWidth:'75%', boxShadow:'0 1px 3px rgba(0,0,0,0.1)' },
+  msgContent: { margin:0, fontSize:'0.92rem', lineHeight:'1.4' },
+  msgTime: { color:'#aaa', fontSize:'0.68rem', padding:'0 0.5rem' },
+  chatInput: { position:'fixed', bottom:'65px', left:0, right:0, background:'white', padding:'0.6rem 0.8rem', display:'flex', gap:'0.6rem', alignItems:'center', boxShadow:'0 -1px 4px rgba(0,0,0,0.08)' },
+  inputField: { flex:1, padding:'0.6rem 1rem', borderRadius:'20px', border:'1px solid #e0e0e0', fontSize:'0.95rem', color:'#1a1a2e', outline:'none', background:'#f5f5f5' },
+  sendBtn: { width:'38px', height:'38px', borderRadius:'50%', background:'#e94560', color:'white', border:'none', cursor:'pointer', fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
+  emptyState: { textAlign:'center', padding:'3rem 1rem' },
+  emptyIcon: { fontSize:'3rem', marginBottom:'1rem' },
+  emptyTitle: { color:'#1a1a2e', marginBottom:'0.5rem' },
+  emptyText: { color:'#888', marginBottom:'1.5rem', fontSize:'0.9rem' },
   browseBtn: { background:'#e94560', color:'white', border:'none', padding:'0.8rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
   notLoggedIn: { textAlign:'center', padding:'5rem 1rem' },
   loginBtn: { background:'#e94560', color:'white', border:'none', padding:'0.8rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', marginTop:'1rem' }
