@@ -12,6 +12,10 @@ function Admin() {
   const [users, setUsers] = useState([])
   const [listings, setListings] = useState([])
   const [reports, setReports] = useState([])
+  const [categories, setCategories] = useState([])
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatIcon, setNewCatIcon] = useState('📦')
+  const [catMsg, setCatMsg] = useState('')
   const [password, setPassword] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
   const [error, setError] = useState('')
@@ -34,17 +38,14 @@ function Admin() {
       fetchUsers()
       fetchListings()
       fetchReports()
+      fetchCategories()
     }
   }, [loggedIn])
 
   const handleLogin = () => {
     const found = admins.find(a => a.password === password)
-    if (found) {
-      setLoggedIn(true)
-      setError('')
-    } else {
-      setError('Incorrect admin password!')
-    }
+    if (found) { setLoggedIn(true); setError('') }
+    else setError('Incorrect admin password!')
   }
 
   const fetchStats = async () => {
@@ -72,6 +73,35 @@ function Admin() {
     try {
       const res = await axios.get(`${API}/api/admin/reports`, { headers })
       setReports(res.data)
+    } catch (err) { console.error(err) }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API}/api/categories/`)
+      setCategories(res.data)
+    } catch (err) { console.error(err) }
+  }
+
+  const addCategory = async () => {
+    if (!newCatName.trim()) { setCatMsg('❌ Name is required'); return }
+    try {
+      await axios.post(`${API}/api/categories/`, { name: newCatName.trim(), icon: newCatIcon })
+      setCatMsg(`✅ "${newCatName}" added!`)
+      setNewCatName('')
+      setNewCatIcon('📦')
+      fetchCategories()
+    } catch (err) {
+      setCatMsg(`❌ ${err.response?.data?.error || 'Failed to add category'}`)
+    }
+  }
+
+  const deleteCategory = async (id, name) => {
+    if (!window.confirm(`Delete "${name}"? Existing listings with this category won't be affected.`)) return
+    try {
+      await axios.delete(`${API}/api/categories/${id}`)
+      setCatMsg(`✅ "${name}" deleted!`)
+      fetchCategories()
     } catch (err) { console.error(err) }
   }
 
@@ -128,23 +158,17 @@ function Admin() {
   }
 
   const changePassword = () => {
-    if (!newPassword || newPassword !== confirmPassword) {
-      setPasswordMsg('❌ Passwords do not match!')
-      return
-    }
+    if (!newPassword || newPassword !== confirmPassword) { setPasswordMsg('❌ Passwords do not match!'); return }
     const updated = admins.map((a, i) => i === 0 ? { ...a, password: newPassword } : a)
     setAdmins(updated)
     localStorage.setItem('admin_accounts', JSON.stringify(updated))
-    setPasswordMsg('✅ Password changed successfully!')
+    setPasswordMsg('✅ Password changed!')
     setNewPassword('')
     setConfirmPassword('')
   }
 
   const addAdmin = () => {
-    if (!newAdminName || !newAdminPass) {
-      setAdminMsg('❌ Please fill in both fields!')
-      return
-    }
+    if (!newAdminName || !newAdminPass) { setAdminMsg('❌ Fill in both fields!'); return }
     const updated = [...admins, { username: newAdminName, password: newAdminPass }]
     setAdmins(updated)
     localStorage.setItem('admin_accounts', JSON.stringify(updated))
@@ -154,7 +178,7 @@ function Admin() {
   }
 
   const removeAdmin = (index) => {
-    if (index === 0) { setAdminMsg('❌ Cannot remove the main admin!'); return }
+    if (index === 0) { setAdminMsg('❌ Cannot remove main admin!'); return }
     const updated = admins.filter((_, i) => i !== index)
     setAdmins(updated)
     localStorage.setItem('admin_accounts', JSON.stringify(updated))
@@ -168,9 +192,12 @@ function Admin() {
     { key:'sellers', label:`🏪 Sellers ${pendingSellers.length > 0 ? `(${pendingSellers.length})` : ''}` },
     { key:'users', label:'👥 Users' },
     { key:'listings', label:'📦 Listings' },
+    { key:'categories', label:'🗂 Categories' },
     { key:'reports', label:`🚩 Reports ${reports.length > 0 ? `(${reports.length})` : ''}` },
     { key:'settings', label:'⚙️ Settings' }
   ]
+
+  const commonIcons = ['📦','💻','📚','👕','🍱','🔧','🏠','🚗','💄','⚽','🎵','📱','🛋','📷','💡','🧴','👟','🎒']
 
   if (!loggedIn) return (
     <div style={styles.loginPage}>
@@ -309,6 +336,52 @@ function Admin() {
             </div>
           </div>
         )}
+        {tab === 'categories' && (
+          <div>
+            <h2 style={styles.pageTitle}>🗂 Category Management</h2>
+            <div style={styles.settingsCard}>
+              <h3 style={styles.settingsTitle}>Add New Category</h3>
+              <div style={styles.catForm}>
+                <input
+                  style={styles.settingsInput}
+                  type="text"
+                  placeholder="Category name (e.g. Accommodation)"
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                />
+                <div style={styles.iconPicker}>
+                  <p style={styles.iconLabel}>Pick an icon:</p>
+                  <div style={styles.iconGrid}>
+                    {commonIcons.map(icon => (
+                      <button
+                        key={icon}
+                        style={{...styles.iconBtn, ...(newCatIcon === icon ? styles.activeIconBtn : {})}}
+                        onClick={() => setNewCatIcon(icon)}
+                      >{icon}</button>
+                    ))}
+                  </div>
+                  <p style={styles.selectedIcon}>Selected: <span style={{fontSize:'1.5rem'}}>{newCatIcon}</span></p>
+                </div>
+                <button style={styles.settingsBtn} onClick={addCategory}>Add Category</button>
+                {catMsg && <p style={styles.settingsMsg}>{catMsg}</p>}
+              </div>
+            </div>
+            <div style={styles.settingsCard}>
+              <h3 style={styles.settingsTitle}>Current Categories ({categories.length})</h3>
+              <div style={styles.catList}>
+                {categories.map(cat => (
+                  <div key={cat.id} style={styles.catRow}>
+                    <span style={styles.catIcon2}>{cat.icon}</span>
+                    <span style={styles.catName2}>{cat.name}</span>
+                    <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteCategory(cat.id, cat.name)}>
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         {tab === 'reports' && (
           <div>
             <h2 style={styles.pageTitle}>Reports ({reports.length})</h2>
@@ -346,8 +419,8 @@ function Admin() {
               {admins.map((a, i) => (
                 <div key={i} style={styles.adminRow}>
                   <span style={styles.adminName}>👤 {a.username}</span>
-                  {i > 0 && <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => removeAdmin(i)}>Remove</button>}
-                  {i === 0 && <span style={styles.mainAdminBadge}>Main Admin</span>}
+                  {i > 0 ? <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => removeAdmin(i)}>Remove</button>
+                  : <span style={styles.mainAdminBadge}>Main Admin</span>}
                 </div>
               ))}
               <div style={styles.addAdminForm}>
@@ -431,7 +504,18 @@ const styles = {
   adminName: { color:'#1a1a2e', fontSize:'0.95rem' },
   mainAdminBadge: { background:'#e94560', color:'white', padding:'0.2rem 0.6rem', borderRadius:'20px', fontSize:'0.75rem' },
   addAdminForm: { marginTop:'1rem', paddingTop:'1rem', borderTop:'1px solid #eee' },
-  addAdminTitle: { color:'#1a1a2e', marginBottom:'0.8rem', fontSize:'0.95rem' }
+  addAdminTitle: { color:'#1a1a2e', marginBottom:'0.8rem', fontSize:'0.95rem' },
+  catForm: {},
+  iconPicker: { marginBottom:'1rem' },
+  iconLabel: { color:'#888', fontSize:'0.85rem', marginBottom:'0.5rem' },
+  iconGrid: { display:'grid', gridTemplateColumns:'repeat(6, 1fr)', gap:'0.4rem', marginBottom:'0.5rem' },
+  iconBtn: { padding:'0.4rem', border:'2px solid #eee', borderRadius:'8px', cursor:'pointer', background:'white', fontSize:'1.2rem' },
+  activeIconBtn: { border:'2px solid #e94560', background:'#fff0f0' },
+  selectedIcon: { color:'#888', fontSize:'0.85rem' },
+  catList: { display:'flex', flexDirection:'column', gap:'0.5rem' },
+  catRow: { display:'flex', alignItems:'center', gap:'1rem', padding:'0.7rem', background:'#f9f9f9', borderRadius:'8px' },
+  catIcon2: { fontSize:'1.5rem' },
+  catName2: { flex:1, color:'#1a1a2e', fontWeight:'bold' }
 }
 
 export default Admin
