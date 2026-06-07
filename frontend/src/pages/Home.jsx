@@ -6,11 +6,22 @@ const API = 'https://evelyn-hone-market-production.up.railway.app'
 
 function Home() {
   const [trending, setTrending] = useState([])
+  const [categories, setCategories] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchTrending()
+    fetchCategories()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API}/api/categories/`)
+      setCategories(res.data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const fetchTrending = async () => {
     try {
@@ -22,15 +33,6 @@ function Home() {
       console.error(err)
     }
   }
-
-  const categories = [
-    { name: 'Electronics', icon: '💻' },
-    { name: 'Textbooks', icon: '📚' },
-    { name: 'Clothing', icon: '👕' },
-    { name: 'Food', icon: '🍱' },
-    { name: 'Services', icon: '🔧' },
-    { name: 'Other', icon: '📦' }
-  ]
 
   return (
     <div style={styles.container}>
@@ -56,7 +58,7 @@ function Home() {
         <h2 style={styles.sectionTitle}>Browse by Category</h2>
         <div style={styles.catGrid}>
           {categories.map(cat => (
-            <Link to={`/listings?category=${cat.name}`} key={cat.name} style={styles.catCard}>
+            <Link to={`/listings?category=${cat.name}`} key={cat.id} style={styles.catCard}>
               <span style={styles.catIcon}>{cat.icon}</span>
               <span style={styles.catName}>{cat.name}</span>
             </Link>
@@ -136,7 +138,7 @@ const styles = {
   catGrid: { display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'0.8rem' },
   catCard: { background:'#1a1a2e', color:'white', padding:'1rem 0.5rem', borderRadius:'12px', textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem' },
   catIcon: { fontSize:'1.8rem' },
-  catName: { fontSize:'0.8rem', fontWeight:'bold' },
+  catName: { fontSize:'0.8rem', fontWeight:'bold', textAlign:'center' },
   trendingGrid: { display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'1rem' },
   trendingCard: { background:'white', borderRadius:'12px', overflow:'hidden', boxShadow:'0 4px 15px rgba(0,0,0,0.08)', cursor:'pointer' },
   trendingImg: { width:'100%', aspectRatio:'16/9', objectFit:'cover', display:'block' },
