@@ -6,7 +6,10 @@ import os
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'evelyn-hone-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///market.db')
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///market.db')
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     CORS(app, origins='*')
@@ -19,6 +22,7 @@ def create_app():
     from routes.admin import admin
     from routes.reports import reports
     from routes.notifications import notifications
+    from routes.categories import categories
 
     app.register_blueprint(auth, url_prefix='/api/auth')
     app.register_blueprint(listings, url_prefix='/api/listings')
@@ -27,6 +31,7 @@ def create_app():
     app.register_blueprint(admin, url_prefix='/api/admin')
     app.register_blueprint(reports, url_prefix='/api/reports')
     app.register_blueprint(notifications, url_prefix='/api/notifications')
+    app.register_blueprint(categories, url_prefix='/api/categories')
 
     with app.app_context():
         db.create_all()

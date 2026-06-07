@@ -14,6 +14,12 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     listings = db.relationship('Listing', backref='seller', lazy=True)
 
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    icon = db.Column(db.String(10), default='📦')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
