@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
+import { getUser } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function ListingDetail() {
   const [listing, setListing] = useState(null)
   const [ratings, setRatings] = useState({ average: 0, total: 0, ratings: [] })
@@ -14,54 +15,48 @@ function ListingDetail() {
   const [reported, setReported] = useState(false)
   const { id } = useParams()
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user'))
-
+  const user = getUser()
   useEffect(() => {
     fetchListing()
   }, [])
-
   const fetchListing = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/listings/')
-      const found = res.data.find(l => l.id === parseInt(id))
-      setListing(found)
-      if (found) fetchRatings(found.seller_id)
+      const res = await axios.get(`${API}/api/listings/${id}`)
+      setListing(res.data)
+      if (res.data) fetchRatings(res.data.sellerId)
     } catch (err) {
       console.error(err)
     }
   }
-
   const fetchRatings = async (sellerId) => {
     try {
-      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/ratings/${sellerId}`)
+      const res = await axios.get(`${API}/api/ratings/${sellerId}`)
       setRatings(res.data)
     } catch (err) {
       console.error(err)
     }
   }
-
   const submitRating = async () => {
     if (!user || !userRating) return
     try {
-      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/ratings/', {
+      await axios.post(`${API}/api/ratings/`, {
         stars: userRating,
         comment,
-        rater_id: user.user_id,
-        seller_id: listing.seller_id
+        rater_id: user.id,
+        seller_id: listing.sellerId
       })
       setRated(true)
-      fetchRatings(listing.seller_id)
+      fetchRatings(listing.sellerId)
     } catch (err) {
       console.error(err)
     }
   }
-
   const submitReport = async () => {
     if (!user || !reportReason) return
     try {
-      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/reports/', {
+      await axios.post(`${API}/api/reports/`, {
         reason: reportReason,
-        reporter_id: user.user_id,
+        reporter_id: user.id,
         listing_id: listing.id
       })
       setReported(true)
@@ -70,31 +65,27 @@ function ListingDetail() {
       console.error(err)
     }
   }
-
   const renderStars = (count, size = '1.2rem') => {
     return [1,2,3,4,5].map(i => (
       <span key={i} style={{color: i <= count ? '#f39c12' : '#ddd', fontSize: size}}>★</span>
     ))
   }
-
   if (!listing) return (
     <div style={styles.loading}>
       <div style={styles.loadingIcon}>⏳</div>
       <p>Loading listing...</p>
     </div>
   )
-
   return (
     <div style={styles.page}>
       <div style={styles.topRow}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>← Back to Listings</button>
-        {user && user.user_id !== listing.seller_id && (
+        {user && user.id !== listing.sellerId && (
           <button style={styles.reportBtn} onClick={() => setShowReport(!showReport)}>
             🚩 Report Listing
           </button>
         )}
       </div>
-
       {showReport && (
         <div style={styles.reportBox}>
           <h4 style={styles.reportTitle}>Report this listing</h4>
@@ -116,17 +107,15 @@ function ListingDetail() {
           </div>
         </div>
       )}
-
       {reported && (
         <div style={styles.reportedMsg}>
           ✅ Thank you! Your report has been submitted and will be reviewed by our admin team.
         </div>
       )}
-
       <div style={styles.container}>
         <div style={styles.imageSection}>
-          {listing.image ? (
-            <img src={listing.image} alt={listing.title} style={styles.image} />
+          {listing.images && listing.images[0] ? (
+            <img src={listing.images[0]} alt={listing.title} style={styles.image} />
           ) : (
             <div style={styles.noImage}>
               <span style={{fontSize:'3rem'}}>📷</span>
@@ -142,7 +131,7 @@ function ListingDetail() {
         <div style={styles.detailSection}>
           <div style={styles.badges}>
             <span style={styles.category}>{listing.category}</span>
-            <span style={styles.listingType}>{listing.listing_type}</span>
+            <span style={styles.listingType}>{listing.listingType}</span>
           </div>
           <h1 style={styles.title}>{listing.title}</h1>
           <p style={styles.price}>K{listing.price}</p>
@@ -151,12 +140,12 @@ function ListingDetail() {
           <p style={styles.description}>{listing.description}</p>
           <div style={styles.divider} />
           <div style={styles.sellerBox}>
-            <div style={styles.sellerAvatar}>{listing.seller_username[0].toUpperCase()}</div>
+            <div style={styles.sellerAvatar}>{listing.seller?.name?.[0]?.toUpperCase()}</div>
             <div>
               <p style={styles.sellerLabel}>Seller</p>
               <div style={styles.sellerNameRow}>
-                <p style={styles.sellerValue}>{listing.seller_username}</p>
-                {listing.seller_verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
+                <p style={styles.sellerValue}>{listing.seller?.name}</p>
+                {listing.seller?.verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
               </div>
             </div>
             <div style={styles.sellerRating}>
@@ -165,10 +154,10 @@ function ListingDetail() {
             </div>
           </div>
           <div style={styles.divider} />
-          <p style={styles.posted}>📅 Posted: {new Date(listing.created_at).toLocaleDateString()}</p>
-          {user && user.user_id !== listing.seller_id && listing.status === 'available' && (
-            <button style={styles.contactBtn} onClick={() => navigate(`/messages?seller=${listing.seller_id}&listing=${listing.id}`)}>
-              💬 Contact {listing.seller_username}
+          <p style={styles.posted}>📅 Posted: {new Date(listing.createdAt).toLocaleDateString()}</p>
+          {user && user.id !== listing.sellerId && listing.status === 'available' && (
+            <button style={styles.contactBtn} onClick={() => navigate(`/messages?seller=${listing.sellerId}&listing=${listing.id}`)}>
+              💬 Contact {listing.seller?.name}
             </button>
           )}
           {listing.status !== 'available' && (
@@ -184,10 +173,10 @@ function ListingDetail() {
         </div>
       </div>
       <div style={styles.ratingsSection}>
-        <h3 style={styles.sectionLabel}>Reviews for {listing.seller_username}</h3>
-        {user && user.user_id !== listing.seller_id && !rated && (
+        <h3 style={styles.sectionLabel}>Reviews for {listing.seller?.name}</h3>
+        {user && user.id !== listing.sellerId && !rated && (
           <div style={styles.rateBox}>
-            <p style={styles.rateTitle}>Rate {listing.seller_username}:</p>
+            <p style={styles.rateTitle}>Rate {listing.seller?.name}:</p>
             <div style={styles.stars}>
               {[1,2,3,4,5].map(i => (
                 <span
@@ -214,7 +203,7 @@ function ListingDetail() {
         {ratings.ratings.length === 0 ? (
           <div style={styles.noRatings}>
             <span style={{fontSize:'2rem'}}>⭐</span>
-            <p>No reviews yet for {listing.seller_username}.</p>
+            <p>No reviews yet for {listing.seller?.name}.</p>
           </div>
         ) : (
           <div style={styles.reviewList}>
@@ -233,7 +222,6 @@ function ListingDetail() {
     </div>
   )
 }
-
 const styles = {
   page: { padding:'2rem', maxWidth:'1100px', margin:'0 auto', fontFamily:'Arial, sans-serif' },
   loading: { textAlign:'center', padding:'5rem', color:'#888' },
@@ -288,5 +276,4 @@ const styles = {
   reviewHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem' },
   reviewComment: { color:'#666', margin:0, fontSize:'0.9rem' }
 }
-
 export default ListingDetail

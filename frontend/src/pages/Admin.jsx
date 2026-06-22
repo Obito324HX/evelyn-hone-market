@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'https://evelyn-hone-market-production.up.railway.app'
+const API = import.meta.env.VITE_API_URL
 const ADMIN_KEY = 'evelyn-hone-admin-2026'
 const headers = { 'X-Admin-Key': ADMIN_KEY }
 

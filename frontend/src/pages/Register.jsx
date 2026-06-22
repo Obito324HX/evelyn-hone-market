@@ -1,17 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
-
-const API = 'https://evelyn-hone-market-production.up.railway.app'
-
+import { saveAuth } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function Register() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-
   const handleRegister = async () => {
     setError('')
     if (!username || !email || !password) {
@@ -20,14 +19,14 @@ function Register() {
     }
     setLoading(true)
     try {
-      await axios.post(`${API}/api/auth/register`, { username, email, password })
-      navigate('/login')
+      const res = await axios.post(`${API}/api/auth/register`, { username, email, password, phone })
+      saveAuth(res.data)
+      navigate('/')
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Try again.')
+      setError(err.response?.data?.message || 'Registration failed. Try again.')
     }
     setLoading(false)
   }
-
   const getFieldHint = (field) => {
     if (field === 'username') {
       const len = username.length
@@ -44,18 +43,14 @@ function Register() {
     }
     return null
   }
-
   const usernameHint = getFieldHint('username')
   const passwordHint = getFieldHint('password')
-
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <h2 style={styles.title}>Create Account</h2>
         <p style={styles.subtitle}>Join the Evelyn Hone campus marketplace</p>
-
         {error && <div style={styles.errorBox}>⚠️ {error}</div>}
-
         <div style={styles.field}>
           <label style={styles.label}>Username</label>
           <input
@@ -72,7 +67,6 @@ function Register() {
           )}
           <small style={styles.hint}>3-30 characters, letters, numbers and _ only</small>
         </div>
-
         <div style={styles.field}>
           <label style={styles.label}>Email Address</label>
           <input
@@ -84,7 +78,17 @@ function Register() {
           />
           <small style={styles.hint}>Must be a valid email address</small>
         </div>
-
+        <div style={styles.field}>
+          <label style={styles.label}>Phone Number</label>
+          <input
+            style={styles.input}
+            type="tel"
+            placeholder="e.g. 0775580799"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+          />
+          <small style={styles.hint}>So buyers can reach you about your listings</small>
+        </div>
         <div style={styles.field}>
           <label style={styles.label}>Password</label>
           <input
@@ -101,7 +105,6 @@ function Register() {
           )}
           <small style={styles.hint}>Minimum 6 characters</small>
         </div>
-
         <button
           style={{...styles.btn, opacity: loading ? 0.7 : 1}}
           onClick={handleRegister}
@@ -114,7 +117,6 @@ function Register() {
     </div>
   )
 }
-
 const styles = {
   container: { display:'flex', justifyContent:'center', alignItems:'center', minHeight:'80vh', background:'#f5f5f5', padding:'1rem', fontFamily:'Arial, sans-serif' },
   card: { background:'white', padding:'2rem', borderRadius:'12px', width:'100%', maxWidth:'420px', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
@@ -128,5 +130,4 @@ const styles = {
   btn: { width:'100%', padding:'0.9rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem', marginTop:'0.5rem' },
   loginLink: { textAlign:'center', marginTop:'1rem', color:'#888', fontSize:'0.9rem' }
 }
-
 export default Register

@@ -1,19 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-
-const API = 'https://evelyn-hone-market-production.up.railway.app'
-
+const API = import.meta.env.VITE_API_URL
 function Home() {
   const [trending, setTrending] = useState([])
   const [categories, setCategories] = useState([])
   const navigate = useNavigate()
-
   useEffect(() => {
     fetchTrending()
     fetchCategories()
   }, [])
-
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/api/categories/`)
@@ -22,7 +18,6 @@ function Home() {
       console.error(err)
     }
   }
-
   const fetchTrending = async () => {
     try {
       const res = await axios.get(`${API}/api/listings/`)
@@ -33,7 +28,6 @@ function Home() {
       console.error(err)
     }
   }
-
   return (
     <div style={styles.container}>
       <div style={styles.hero}>
@@ -46,14 +40,12 @@ function Home() {
           </div>
         </div>
       </div>
-
       <div style={styles.statsBar}>
         <div style={styles.stat}>🏫 Campus Only</div>
         <div style={styles.stat}>💬 Direct Messaging</div>
         <div style={styles.stat}>⭐ Seller Ratings</div>
         <div style={styles.stat}>🔒 Safe & Trusted</div>
       </div>
-
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Browse by Category</h2>
         <div style={styles.catGrid}>
@@ -65,7 +57,6 @@ function Home() {
           ))}
         </div>
       </div>
-
       {trending.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionHeader}>
@@ -75,8 +66,8 @@ function Home() {
           <div style={styles.trendingGrid}>
             {trending.map(listing => (
               <div key={listing.id} style={styles.trendingCard} onClick={() => navigate(`/listings/${listing.id}`)}>
-                {listing.image ? (
-                  <img src={listing.image} alt={listing.title} style={styles.trendingImg} />
+                {listing.images && listing.images[0] ? (
+                  <img src={listing.images[0]} alt={listing.title} style={styles.trendingImg} />
                 ) : (
                   <div style={styles.trendingNoImg}>📷</div>
                 )}
@@ -84,9 +75,9 @@ function Home() {
                   <p style={styles.trendingTitle}>{listing.title}</p>
                   <p style={styles.trendingPrice}>K{listing.price}</p>
                   <div style={styles.trendingSeller}>
-                    <span style={styles.sellerDot}>{listing.seller_username?.[0]?.toUpperCase()}</span>
-                    <span style={styles.sellerName}>{listing.seller_username}</span>
-                    {listing.seller_verified && <span style={styles.vBadge}>✓</span>}
+                    <span style={styles.sellerDot}>{listing.sellerUsername?.[0]?.toUpperCase()}</span>
+                    <span style={styles.sellerName}>{listing.sellerUsername}</span>
+                    {listing.sellerVerified && <span style={styles.vBadge}>✓</span>}
                   </div>
                 </div>
               </div>
@@ -94,7 +85,6 @@ function Home() {
           </div>
         </div>
       )}
-
       <div style={styles.howSection}>
         <h2 style={styles.sectionTitle}>How It Works</h2>
         <div style={styles.stepsGrid}>
@@ -111,7 +101,6 @@ function Home() {
           ))}
         </div>
       </div>
-
       <div style={styles.footer}>
         <p style={styles.footerText}>🌱 Promoting sustainability and reducing waste on campus</p>
         <p style={styles.footerSub}>Evelyn Hone College Market © 2026</p>
@@ -119,7 +108,6 @@ function Home() {
     </div>
   )
 }
-
 const styles = {
   container: { fontFamily:'Arial, sans-serif' },
   hero: { background:'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', color:'white', padding:'3rem 1.5rem', textAlign:'center' },
@@ -160,5 +148,4 @@ const styles = {
   footerText: { color:'#ccc', marginBottom:'0.5rem', fontSize:'0.9rem' },
   footerSub: { color:'#666', fontSize:'0.8rem' }
 }
-
 export default Home

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
-const API = 'https://evelyn-hone-market-production.up.railway.app'
-
+import { getUser, getAuthHeaders } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function CreateListing() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -16,12 +15,10 @@ function CreateListing() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user'))
-
+  const user = getUser()
   useEffect(() => {
     fetchCategories()
   }, [])
-
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/api/categories/`)
@@ -31,12 +28,10 @@ function CreateListing() {
       console.error(err)
     }
   }
-
   if (!user) {
     navigate('/login')
     return null
   }
-
   if (!user.seller_approved) {
     return (
       <div style={styles.blockedPage}>
@@ -64,7 +59,6 @@ function CreateListing() {
       </div>
     )
   }
-
   const handleImages = (e) => {
     const files = Array.from(e.target.files)
     files.forEach(file => {
@@ -76,12 +70,10 @@ function CreateListing() {
       reader.readAsDataURL(file)
     })
   }
-
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index))
     setPreviews(prev => prev.filter((_, i) => i !== index))
   }
-
   const handleSubmit = async () => {
     setError('')
     if (!title || !price) { setError('Title and price are required.'); return }
@@ -89,17 +81,15 @@ function CreateListing() {
     try {
       await axios.post(`${API}/api/listings/`, {
         title, description, price: parseFloat(price),
-        category, listing_type: listingType,
-        image: images[0] || null,
-        user_id: user.user_id
-      })
+        category, listingType: listingType,
+        images: images
+      }, { headers: getAuthHeaders() })
       navigate('/listings')
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create listing. Try again.')
+      setError(err.response?.data?.message || 'Failed to create listing. Try again.')
     }
     setLoading(false)
   }
-
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -165,7 +155,6 @@ function CreateListing() {
     </div>
   )
 }
-
 const styles = {
   page: { minHeight:'100vh', background:'#f5f5f5', padding:'1.5rem', fontFamily:'Arial, sans-serif' },
   container: { maxWidth:'700px', margin:'0 auto', background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
@@ -198,5 +187,4 @@ const styles = {
   pendingBox: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', color:'#856404', fontSize:'0.9rem' },
   profileBtn: { background:'#e94560', color:'white', border:'none', padding:'0.9rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem' }
 }
-
 export default CreateListing

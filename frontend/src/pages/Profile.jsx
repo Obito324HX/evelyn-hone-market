@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
+import { getUser, getAuthHeaders } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function Profile() {
   const [listings, setListings] = useState([])
   const [profilePic, setProfilePic] = useState(null)
@@ -9,60 +10,53 @@ function Profile() {
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
   const navigate = useNavigate()
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')))
-
+  const [user, setUser] = useState(getUser())
   useEffect(() => {
     if (!user) { navigate('/login'); return }
     fetchMyListings()
-    const saved = localStorage.getItem('profilePic_' + user.user_id)
+    const saved = localStorage.getItem('profilePic_' + user.id)
     if (saved) setProfilePic(saved)
   }, [])
-
   const fetchMyListings = async () => {
     try {
-      const res = await axios.get('https://evelyn-hone-market-production.up.railway.app/api/listings/')
-      const mine = res.data.filter(l => l.seller_id === user.user_id)
-      setListings(mine)
+      const res = await axios.get(`${API}/api/listings/?sellerId=${user.id}`)
+      setListings(res.data)
     } catch (err) {
       console.error(err)
     }
   }
-
   const deleteListing = async (id) => {
     try {
-      await axios.delete(`https://evelyn-hone-market-production.up.railway.app/api/listings/${id}`)
+      await axios.delete(`${API}/api/listings/${id}`, { headers: getAuthHeaders() })
       fetchMyListings()
     } catch (err) {
       console.error(err)
     }
   }
-
   const updateStatus = async (id, status) => {
     try {
-      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/listings/${id}/status`, { status })
+      await axios.put(`${API}/api/listings/${id}/status`, { status }, { headers: getAuthHeaders() })
       fetchMyListings()
     } catch (err) {
       console.error(err)
     }
   }
-
   const handlePicUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
     reader.onloadend = () => {
       setProfilePic(reader.result)
-      localStorage.setItem('profilePic_' + user.user_id, reader.result)
+      localStorage.setItem('profilePic_' + user.id, reader.result)
     }
     reader.readAsDataURL(file)
   }
-
   const submitStudentId = async () => {
     if (!studentId.trim()) return
     setSubmitting(true)
     try {
-      await axios.post('https://evelyn-hone-market-production.up.railway.app/api/auth/submit-student-id', {
-        user_id: user.user_id,
+      await axios.post(`${API}/api/auth/submit-student-id`, {
+        user_id: user.id,
         student_id: studentId
       })
       const updated = { ...user, student_id: studentId }
@@ -74,15 +68,12 @@ function Profile() {
     }
     setSubmitting(false)
   }
-
   const getStatusColor = (status) => {
     if (status === 'sold') return '#333'
     if (status === 'reserved') return '#f39c12'
     return '#27ae60'
   }
-
   if (!user) return null
-
   return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -94,19 +85,19 @@ function Profile() {
             {profilePic ? (
               <img src={profilePic} alt="profile" style={styles.avatarImg} />
             ) : (
-              <div style={styles.avatar}>{user.username[0].toUpperCase()}</div>
+              <div style={styles.avatar}>{user.name[0].toUpperCase()}</div>
             )}
           </div>
           <label style={styles.uploadBtn}>
             📷 Upload Profile Pic
             <input type="file" accept="image/*" onChange={handlePicUpload} style={{display:'none'}} />
           </label>
-          <h2 style={styles.username}>{user.username}</h2>
+          <h2 style={styles.username}>{user.name}</h2>
           {user.verified && <span style={styles.verifiedBadge}>✓ Verified</span>}
           <div style={styles.detailsBox}>
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>User ID</span>
-              <span style={styles.detailValue}>#{user.user_id}</span>
+              <span style={styles.detailValue}>#{user.id}</span>
             </div>
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Institution</span>
@@ -124,7 +115,6 @@ function Profile() {
             </div>
           </div>
         </div>
-
         {!user.seller_approved && (
           <div style={styles.sellerCard}>
             <h3 style={styles.sellerCardTitle}>🏪 Become a Seller</h3>
@@ -150,7 +140,6 @@ function Profile() {
             )}
           </div>
         )}
-
         <div style={styles.listingsSection}>
           <div style={styles.sectionHeader}>
             <h3 style={styles.sectionTitle}>MY LISTINGS</h3>
@@ -174,7 +163,7 @@ function Profile() {
             <div style={styles.grid}>
               {listings.map(listing => (
                 <div key={listing.id} style={styles.card}>
-                  {listing.image && <img src={listing.image} alt={listing.title} style={styles.cardImage} />}
+                  {listing.images && listing.images[0] && <img src={listing.images[0]} alt={listing.title} style={styles.cardImage} />}
                   <div style={styles.cardBody}>
                     <div style={styles.cardHeader}>
                       <span style={styles.category}>{listing.category}</span>
@@ -200,7 +189,6 @@ function Profile() {
     </div>
   )
 }
-
 const styles = {
   page: { fontFamily:'Arial, sans-serif', minHeight:'100vh', background:'#f0f0f0' },
   header: { background:'#e94560', padding:'1rem 1.5rem' },
@@ -247,5 +235,4 @@ const styles = {
   statusBtn: { flex:1, padding:'0.3rem', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'0.65rem', fontWeight:'bold' },
   deleteBtn: { width:'100%', padding:'0.5rem', background:'#fff0f0', color:'#e94560', border:'1px solid #e94560', borderRadius:'8px', cursor:'pointer', fontSize:'0.8rem' }
 }
-
 export default Profile

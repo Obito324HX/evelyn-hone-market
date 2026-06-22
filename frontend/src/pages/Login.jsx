@@ -1,23 +1,22 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import { saveAuth } from '../utils/auth'
 
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
-
   const handleLogin = async () => {
     try {
-      const res = await axios.post('https://evelyn-hone-market-production.up.railway.app/api/auth/login', { email, password })
-      localStorage.setItem('user', JSON.stringify(res.data))
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password })
+      saveAuth(res.data)
       navigate('/')
     } catch (err) {
-      setError('Invalid email or password')
+      setError(err.response?.data?.message || 'Invalid email or password')
     }
   }
-
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -31,7 +30,6 @@ function Login() {
     </div>
   )
 }
-
 const styles = {
   container: { display:'flex', justifyContent:'center', alignItems:'center', minHeight:'80vh', background:'#f5f5f5' },
   card: { background:'white', padding:'2rem', borderRadius:'8px', width:'100%', maxWidth:'400px', boxShadow:'0 2px 10px rgba(0,0,0,0.1)' },
@@ -41,5 +39,4 @@ const styles = {
   error: { color:'red', textAlign:'center' },
   link: { textAlign:'center', marginTop:'1rem' }
 }
-
 export default Login

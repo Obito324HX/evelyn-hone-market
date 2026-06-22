@@ -1,35 +1,29 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-
-const API = 'https://evelyn-hone-market-production.up.railway.app'
-
+import { getUser, logout as clearAuth } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function Navbar() {
-  const user = JSON.parse(localStorage.getItem('user'))
+  const user = getUser()
   const navigate = useNavigate()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
-
   useEffect(() => {
     if (user) checkNotifications()
   }, [location])
-
   const checkNotifications = async () => {
     try {
-      const res = await axios.get(`${API}/api/notifications/${user.user_id}`)
+      const res = await axios.get(`${API}/api/notifications/${user.id}`)
       setUnreadCount(res.data.filter(n => !n.read).length)
     } catch (err) {
       console.error(err)
     }
   }
-
   const logout = () => {
-    localStorage.removeItem('user')
+    clearAuth()
     navigate('/login')
   }
-
   const isActive = (path) => location.pathname === path
-
   return (
     <>
       {/* Top bar */}
@@ -38,7 +32,7 @@ function Navbar() {
         <div style={styles.topRight}>
           {user ? (
             <>
-              <span style={styles.username}>{user.username}</span>
+              <span style={styles.username}>{user.name}</span>
               <button onClick={logout} style={styles.logoutBtn}>Logout</button>
             </>
           ) : (
@@ -49,7 +43,6 @@ function Navbar() {
           )}
         </div>
       </nav>
-
       {/* Bottom tab bar */}
       <nav style={styles.bottomBar}>
         <Link to="/" style={{...styles.tab, ...(isActive('/') ? styles.activeTab : {})}}>
@@ -71,19 +64,18 @@ function Navbar() {
         <Link to={user ? '/profile' : '/login'} style={{...styles.tab, ...((isActive('/profile') || isActive('/login')) ? styles.activeTab : {})}}>
           <span style={styles.tabIconWrapper}>
             {user ? (
-              <span style={styles.tabAvatar}>{user.username[0].toUpperCase()}</span>
+              <span style={styles.tabAvatar}>{user.name[0].toUpperCase()}</span>
             ) : (
               <span style={styles.tabIcon}>👤</span>
             )}
             {unreadCount > 0 && <span style={styles.tabBadge}>{unreadCount}</span>}
           </span>
-          <span style={styles.tabLabel}>{user ? user.username.substring(0,6) : 'Login'}</span>
+          <span style={styles.tabLabel}>{user ? user.name.substring(0,6) : 'Login'}</span>
         </Link>
       </nav>
     </>
   )
 }
-
 const styles = {
   topNav: {
     backgroundColor:'#1a1a2e',
@@ -182,5 +174,4 @@ const styles = {
     fontWeight:'bold'
   }
 }
-
 export default Navbar

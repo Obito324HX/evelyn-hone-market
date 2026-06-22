@@ -1,50 +1,44 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
+import { getUser } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function Notifications() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user'))
-
+  const user = getUser()
   useEffect(() => {
     if (!user) { navigate('/login'); return }
     fetchNotifications()
   }, [])
-
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${user.user_id}`)
+      const res = await axios.get(`${API}/api/notifications/${user.id}`)
       setNotifications(res.data)
     } catch (err) {
       console.error(err)
     }
     setLoading(false)
   }
-
   const markRead = async (id) => {
     try {
-      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${id}/read`)
+      await axios.put(`${API}/api/notifications/${id}/read`)
       setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n))
     } catch (err) {
       console.error(err)
     }
   }
-
   const markAllRead = async () => {
     try {
-      await axios.put(`https://evelyn-hone-market-production.up.railway.app/api/notifications/${user.user_id}/read-all`)
+      await axios.put(`${API}/api/notifications/${user.id}/read-all`)
       setNotifications(prev => prev.map(n => ({...n, read: true})))
     } catch (err) {
       console.error(err)
     }
   }
-
   const unreadCount = notifications.filter(n => !n.read).length
-
   if (!user) return null
-
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -98,7 +92,6 @@ function Notifications() {
     </div>
   )
 }
-
 const styles = {
   page: { minHeight:'100vh', background:'#f5f5f5', padding:'2rem', fontFamily:'Arial, sans-serif' },
   container: { maxWidth:'700px', margin:'0 auto' },
@@ -122,5 +115,4 @@ const styles = {
   notifTime: { color:'#888', fontSize:'0.82rem' },
   unreadDot: { width:'10px', height:'10px', borderRadius:'50%', background:'#e94560', flexShrink:0 }
 }
-
 export default Notifications

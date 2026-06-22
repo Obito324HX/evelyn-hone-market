@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
+const API = import.meta.env.VITE_API_URL
 function Listings() {
   const [listings, setListings] = useState([])
   const [category, setCategory] = useState('')
@@ -12,23 +12,20 @@ function Listings() {
   const [sortBy, setSortBy] = useState('newest')
   const [showFilters, setShowFilters] = useState(false)
   const navigate = useNavigate()
-
   useEffect(() => {
     fetchListings()
   }, [category])
-
   const fetchListings = async () => {
     try {
       const url = category
-        ? `https://evelyn-hone-market-production.up.railway.app/api/listings/?category=${category}`
-        : 'https://evelyn-hone-market-production.up.railway.app/api/listings/'
+        ? `${API}/api/listings/?category=${category}`
+        : `${API}/api/listings/`
       const res = await axios.get(url)
       setListings(res.data)
     } catch (err) {
       console.error(err)
     }
   }
-
   const clearFilters = () => {
     setSearch('')
     setMinPrice('')
@@ -37,37 +34,31 @@ function Listings() {
     setSortBy('newest')
     setCategory('')
   }
-
   let filtered = listings.filter(l => {
     const matchesSearch = !search ||
       l.title.toLowerCase().includes(search.toLowerCase()) ||
       l.description.toLowerCase().includes(search.toLowerCase()) ||
-      l.seller_username.toLowerCase().includes(search.toLowerCase())
+      l.sellerUsername.toLowerCase().includes(search.toLowerCase())
     const matchesMin = !minPrice || l.price >= parseFloat(minPrice)
     const matchesMax = !maxPrice || l.price <= parseFloat(maxPrice)
-    const matchesCondition = !condition || l.listing_type === condition
+    const matchesCondition = !condition || l.listingType === condition
     return matchesSearch && matchesMin && matchesMax && matchesCondition
   })
-
-  if (sortBy === 'newest') filtered = [...filtered].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-  if (sortBy === 'oldest') filtered = [...filtered].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  if (sortBy === 'newest') filtered = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  if (sortBy === 'oldest') filtered = [...filtered].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
   if (sortBy === 'price_low') filtered = [...filtered].sort((a, b) => a.price - b.price)
   if (sortBy === 'price_high') filtered = [...filtered].sort((a, b) => b.price - a.price)
-
   const toggleFavorite = (id) => {
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]')
     const updated = favs.includes(id) ? favs.filter(f => f !== id) : [...favs, id]
     localStorage.setItem('favorites', JSON.stringify(updated))
     setListings([...listings])
   }
-
   const isFavorite = (id) => {
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]')
     return favs.includes(id)
   }
-
   const activeFiltersCount = [search, minPrice, maxPrice, condition, category].filter(Boolean).length
-
   return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -153,8 +144,8 @@ function Listings() {
           filtered.map(listing => (
             <div key={listing.id} style={styles.card}>
               <div style={styles.imageWrapper}>
-                {listing.image ? (
-                  <img src={listing.image} alt={listing.title} style={styles.image} />
+                {listing.images && listing.images[0] ? (
+                  <img src={listing.images[0]} alt={listing.title} style={styles.image} />
                 ) : (
                   <div style={styles.noImage}>📷 No Image</div>
                 )}
@@ -168,15 +159,15 @@ function Listings() {
               <div style={styles.cardBody}>
                 <div style={styles.cardTop}>
                   <span style={styles.category}>{listing.category}</span>
-                  <span style={styles.listingType}>{listing.listing_type}</span>
+                  <span style={styles.listingType}>{listing.listingType}</span>
                 </div>
                 <h3 style={styles.cardTitle}>{listing.title}</h3>
                 <p style={styles.cardDesc}>{listing.description.substring(0, 80)}...</p>
                 <p style={styles.price}>K{listing.price}</p>
                 <div style={styles.sellerRow}>
-                  <div style={styles.sellerAvatar}>{listing.seller_username[0].toUpperCase()}</div>
-                  <span style={styles.sellerName}>{listing.seller_username}</span>
-                  {listing.seller_verified && <span style={styles.verifiedBadge}>✓</span>}
+                  <div style={styles.sellerAvatar}>{listing.sellerUsername[0].toUpperCase()}</div>
+                  <span style={styles.sellerName}>{listing.sellerUsername}</span>
+                  {listing.sellerVerified && <span style={styles.verifiedBadge}>✓</span>}
                 </div>
                 <div style={styles.btnRow}>
                   <button
@@ -187,7 +178,7 @@ function Listings() {
                   >View</button>
                   <button
                     style={styles.contactBtn}
-                    onClick={() => navigate(`/messages?seller=${listing.seller_id}&listing=${listing.id}`)}
+                    onClick={() => navigate(`/messages?seller=${listing.sellerId}&listing=${listing.id}`)}
                   >Contact</button>
                 </div>
               </div>
@@ -198,7 +189,6 @@ function Listings() {
     </div>
   )
 }
-
 const styles = {
   page: { padding:'1.5rem', maxWidth:'1200px', margin:'0 auto', fontFamily:'Arial, sans-serif' },
   header: { marginBottom:'1.5rem' },
@@ -243,5 +233,4 @@ const styles = {
   emptyText: { color:'#888', marginBottom:'1.5rem' },
   clearFiltersBtn: { background:'#e94560', color:'white', border:'none', padding:'0.8rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' }
 }
-
 export default Listings

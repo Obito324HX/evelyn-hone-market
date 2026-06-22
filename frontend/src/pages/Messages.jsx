@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-
-const API = 'https://evelyn-hone-market-production.up.railway.app'
-
+import { getUser } from '../utils/auth'
+const API = import.meta.env.VITE_API_URL
 function Messages() {
   const [messages, setMessages] = useState([])
   const [content, setContent] = useState('')
@@ -14,32 +13,28 @@ function Messages() {
   const params = new URLSearchParams(location.search)
   const sellerId = params.get('seller')
   const listingId = params.get('listing')
-  const user = JSON.parse(localStorage.getItem('user'))
-
+  const user = getUser()
   useEffect(() => {
     if (user) fetchMessages()
   }, [])
-
   useEffect(() => {
     if (sellerId) {
       setSelectedConvo({ other_id: parseInt(sellerId), listing_id: parseInt(listingId) })
     }
   }, [sellerId])
-
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API}/api/messages/${user.user_id}`)
+      const res = await axios.get(`${API}/api/messages/${user.id}`)
       setMessages(res.data)
       groupConversations(res.data)
     } catch (err) {
       console.error(err)
     }
   }
-
   const groupConversations = (msgs) => {
     const convos = {}
     msgs.forEach(msg => {
-      const otherId = msg.sender_id === user.user_id ? msg.receiver_id : msg.sender_id
+      const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id
       const key = `${otherId}_${msg.listing_id}`
       if (!convos[key]) {
         convos[key] = { other_id: otherId, listing_id: msg.listing_id, messages: [], lastMsg: msg }
@@ -51,13 +46,12 @@ function Messages() {
     })
     setConversations(Object.values(convos))
   }
-
   const sendMessage = async () => {
     if (!user || !content.trim() || !selectedConvo) return
     try {
       await axios.post(`${API}/api/messages/`, {
         content,
-        sender_id: user.user_id,
+        sender_id: user.id,
         receiver_id: selectedConvo.other_id,
         listing_id: selectedConvo.listing_id
       })
@@ -67,14 +61,12 @@ function Messages() {
       console.error(err)
     }
   }
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
     }
   }
-
   const getConvoMessages = () => {
     if (!selectedConvo) return []
     return messages.filter(m =>
@@ -82,7 +74,6 @@ function Messages() {
       (m.sender_id === selectedConvo.other_id || m.receiver_id === selectedConvo.other_id)
     ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
   }
-
   if (!user) return (
     <div style={styles.notLoggedIn}>
       <div style={styles.emptyIcon}>🔒</div>
@@ -90,9 +81,7 @@ function Messages() {
       <button style={styles.loginBtn} onClick={() => navigate('/login')}>Login</button>
     </div>
   )
-
   const convoMessages = getConvoMessages()
-
   return (
     <div style={styles.page}>
       {!selectedConvo ? (
@@ -134,8 +123,8 @@ function Messages() {
               <div style={styles.noMsgs}><p>Send the first message!</p></div>
             ) : (
               convoMessages.map(msg => (
-                <div key={msg.id} style={msg.sender_id === user.user_id ? styles.sentWrapper : styles.receivedWrapper}>
-                  <div style={msg.sender_id === user.user_id ? styles.sentMsg : styles.receivedMsg}>
+                <div key={msg.id} style={msg.sender_id === user.id ? styles.sentWrapper : styles.receivedWrapper}>
+                  <div style={msg.sender_id === user.id ? styles.sentMsg : styles.receivedMsg}>
                     <p style={styles.msgContent}>{msg.content}</p>
                   </div>
                   <small style={styles.msgTime}>{new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
@@ -161,7 +150,6 @@ function Messages() {
     </div>
   )
 }
-
 const styles = {
   page: { minHeight:'100vh', background:'#f5f5f5', fontFamily:'Arial, sans-serif' },
   container: { maxWidth:'700px', margin:'0 auto', padding:'1rem' },
@@ -198,5 +186,4 @@ const styles = {
   notLoggedIn: { textAlign:'center', padding:'5rem 1rem' },
   loginBtn: { background:'#e94560', color:'white', border:'none', padding:'0.8rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', marginTop:'1rem' }
 }
-
 export default Messages
