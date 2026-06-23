@@ -31,6 +31,7 @@ def create_app():
     from routes.notifications import notifications
     from routes.categories import categories
 
+    # Existing prefix - used by our own frontend
     app.register_blueprint(auth, url_prefix='/api/auth')
     app.register_blueprint(listings, url_prefix='/api/listings')
     app.register_blueprint(users, url_prefix='/api/users')
@@ -40,6 +41,11 @@ def create_app():
     app.register_blueprint(reports, url_prefix='/api/reports')
     app.register_blueprint(notifications, url_prefix='/api/notifications')
     app.register_blueprint(categories, url_prefix='/api/categories')
+
+    # No-prefix aliases - used by the second frontend (no /api in its base URL)
+    app.register_blueprint(auth, url_prefix='/auth', name='auth_noprefix')
+    app.register_blueprint(listings, url_prefix='/listings', name='listings_noprefix')
+    app.register_blueprint(users, url_prefix='/users', name='users_noprefix')
 
     @app.errorhandler(404)
     def not_found(e):
