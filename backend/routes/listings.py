@@ -32,7 +32,7 @@ def serialize_listing(listing, include_seller=False):
         data['sellerVerified'] = seller.verified if seller else False
     return data
 
-@listings.route('/', methods=['GET'])
+@listings.route('/', methods=['GET'], strict_slashes=False)
 def get_listings():
     search = request.args.get('search')
     category = request.args.get('category')
@@ -57,7 +57,7 @@ def get_listing(id):
         return jsonify({'message': 'Listing not found'}), 404
     return jsonify(serialize_listing(listing, include_seller=True)), 200
 
-@listings.route('/', methods=['POST'])
+@listings.route('/', methods=['POST'], strict_slashes=False)
 @jwt_required()
 def create_listing():
     user_id = get_jwt_identity()
