@@ -96,7 +96,7 @@ function Profile() {
             {profilePic ? (
               <img src={profilePic} alt="profile" style={styles.avatarImg} />
             ) : (
-              <div style={styles.avatar}>{user.name[0].toUpperCase()}</div>
+              <div style={styles.avatar}>{user.name?.[0]?.toUpperCase() || '?'}</div>
             )}
           </div>
           <label style={styles.uploadBtn} className="btn-hover">

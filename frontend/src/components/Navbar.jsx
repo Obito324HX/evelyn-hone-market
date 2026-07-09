@@ -63,7 +63,7 @@ function Navbar() {
             {user ? (
               <>
                 <Link to="/profile" style={styles.avatarLink} className="link-hover">
-                  <span style={styles.avatar}>{user.name[0].toUpperCase()}</span>
+                  <span style={styles.avatar}>{user.name?.[0]?.toUpperCase() || '?'}</span>
                 </Link>
                 <button onClick={logout} style={styles.logoutBtn} className="btn-hover">Logout</button>
               </>
