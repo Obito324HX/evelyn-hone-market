@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { getUser, getAuthHeaders } from '../utils/auth'
+import { colors, radius, shadow, font, fontDisplay } from '../theme'
 const API = import.meta.env.VITE_API_URL
+
 function Profile() {
   const [listings, setListings] = useState([])
   const [profilePic, setProfilePic] = useState(null)
@@ -11,12 +13,14 @@ function Profile() {
   const [submitMsg, setSubmitMsg] = useState('')
   const navigate = useNavigate()
   const [user, setUser] = useState(getUser())
+
   useEffect(() => {
     if (!user) { navigate('/login'); return }
     fetchMyListings()
     const saved = localStorage.getItem('profilePic_' + user.id)
     if (saved) setProfilePic(saved)
   }, [])
+
   const fetchMyListings = async () => {
     try {
       const res = await axios.get(`${API}/api/listings/?sellerId=${user.id}`)
@@ -25,6 +29,7 @@ function Profile() {
       console.error(err)
     }
   }
+
   const deleteListing = async (id) => {
     try {
       await axios.delete(`${API}/api/listings/${id}`, { headers: getAuthHeaders() })
@@ -33,6 +38,7 @@ function Profile() {
       console.error(err)
     }
   }
+
   const updateStatus = async (id, status) => {
     try {
       await axios.put(`${API}/api/listings/${id}/status`, { status }, { headers: getAuthHeaders() })
@@ -41,6 +47,7 @@ function Profile() {
       console.error(err)
     }
   }
+
   const handlePicUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -51,6 +58,7 @@ function Profile() {
     }
     reader.readAsDataURL(file)
   }
+
   const submitStudentId = async () => {
     if (!studentId.trim()) return
     setSubmitting(true)
@@ -68,16 +76,19 @@ function Profile() {
     }
     setSubmitting(false)
   }
+
   const getStatusColor = (status) => {
-    if (status === 'sold') return '#333'
-    if (status === 'reserved') return '#f39c12'
-    return '#27ae60'
+    if (status === 'sold') return colors.ink
+    if (status === 'reserved') return '#D97706'
+    return '#22C55E'
   }
+
   if (!user) return null
+
   return (
     <div style={styles.page}>
       <div style={styles.header}>
-        <h2 style={styles.headerTitle}>MY PROFILE</h2>
+        <h1 style={styles.headerTitle}>My Profile</h1>
       </div>
       <div style={styles.container}>
         <div style={styles.profileCard}>
@@ -88,8 +99,8 @@ function Profile() {
               <div style={styles.avatar}>{user.name[0].toUpperCase()}</div>
             )}
           </div>
-          <label style={styles.uploadBtn}>
-            📷 Upload Profile Pic
+          <label style={styles.uploadBtn} className="btn-hover">
+            Upload Profile Pic
             <input type="file" accept="image/*" onChange={handlePicUpload} style={{display:'none'}} />
           </label>
           <h2 style={styles.username}>{user.name}</h2>
@@ -105,7 +116,7 @@ function Profile() {
             </div>
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Seller Status</span>
-              <span style={{...styles.detailValue, color: user.seller_approved ? '#27ae60' : '#f39c12'}}>
+              <span style={{...styles.detailValue, color: user.seller_approved ? '#16803D' : '#D97706'}}>
                 {user.seller_approved ? '✅ Approved' : user.student_id ? '⏳ Pending' : '❌ Not Applied'}
               </span>
             </div>
@@ -115,9 +126,10 @@ function Profile() {
             </div>
           </div>
         </div>
+
         {!user.seller_approved && (
           <div style={styles.sellerCard}>
-            <h3 style={styles.sellerCardTitle}>🏪 Become a Seller</h3>
+            <h3 style={styles.sellerCardTitle}>Become a Seller</h3>
             {user.student_id ? (
               <div style={styles.pendingBox}>
                 <p style={styles.pendingText}>⏳ Your student ID <strong>{user.student_id}</strong> has been submitted and is awaiting admin approval.</p>
@@ -132,7 +144,7 @@ function Profile() {
                   value={studentId}
                   onChange={e => setStudentId(e.target.value)}
                 />
-                <button style={styles.submitIdBtn} onClick={submitStudentId} disabled={submitting || !studentId.trim()}>
+                <button style={styles.submitIdBtn} onClick={submitStudentId} disabled={submitting || !studentId.trim()} className="btn-hover">
                   {submitting ? 'Submitting...' : 'Submit Student ID'}
                 </button>
                 {submitMsg && <p style={styles.submitMsg}>{submitMsg}</p>}
@@ -140,11 +152,12 @@ function Profile() {
             )}
           </div>
         )}
+
         <div style={styles.listingsSection}>
           <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>MY LISTINGS</h3>
+            <h3 style={styles.sectionTitle}>My Listings</h3>
             {user.seller_approved ? (
-              <button style={styles.newBtn} onClick={() => navigate('/create-listing')}>+ New</button>
+              <button style={styles.newBtn} onClick={() => navigate('/create-listing')} className="btn-hover">+ New</button>
             ) : (
               <span style={styles.notApprovedNote}>Get approved to sell</span>
             )}
@@ -174,11 +187,11 @@ function Profile() {
                     <h4 style={styles.cardTitle}>{listing.title}</h4>
                     <p style={styles.price}>K{listing.price}</p>
                     <div style={styles.statusBtns}>
-                      <button style={{...styles.statusBtn, background: listing.status === 'available' ? '#27ae60' : '#eee', color: listing.status === 'available' ? 'white' : '#666'}} onClick={() => updateStatus(listing.id, 'available')}>Available</button>
-                      <button style={{...styles.statusBtn, background: listing.status === 'reserved' ? '#f39c12' : '#eee', color: listing.status === 'reserved' ? 'white' : '#666'}} onClick={() => updateStatus(listing.id, 'reserved')}>Reserved</button>
-                      <button style={{...styles.statusBtn, background: listing.status === 'sold' ? '#333' : '#eee', color: listing.status === 'sold' ? 'white' : '#666'}} onClick={() => updateStatus(listing.id, 'sold')}>Sold</button>
+                      <button style={{...styles.statusBtn, background: listing.status === 'available' ? '#22C55E' : colors.bg, color: listing.status === 'available' ? 'white' : colors.textMuted}} onClick={() => updateStatus(listing.id, 'available')}>Available</button>
+                      <button style={{...styles.statusBtn, background: listing.status === 'reserved' ? '#D97706' : colors.bg, color: listing.status === 'reserved' ? 'white' : colors.textMuted}} onClick={() => updateStatus(listing.id, 'reserved')}>Reserved</button>
+                      <button style={{...styles.statusBtn, background: listing.status === 'sold' ? colors.ink : colors.bg, color: listing.status === 'sold' ? 'white' : colors.textMuted}} onClick={() => updateStatus(listing.id, 'sold')}>Sold</button>
                     </div>
-                    <button style={styles.deleteBtn} onClick={() => deleteListing(listing.id)}>🗑 Delete</button>
+                    <button style={styles.deleteBtn} onClick={() => deleteListing(listing.id)}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -189,50 +202,52 @@ function Profile() {
     </div>
   )
 }
+
 const styles = {
-  page: { fontFamily:'Arial, sans-serif', minHeight:'100vh', background:'#f0f0f0' },
-  header: { background:'#e94560', padding:'1rem 1.5rem' },
-  headerTitle: { color:'white', margin:0, fontSize:'1.1rem', letterSpacing:'2px' },
-  container: { maxWidth:'1100px', margin:'1rem auto', padding:'0 1rem', display:'flex', flexDirection:'column', gap:'1rem' },
-  profileCard: { background:'white', borderRadius:'12px', padding:'1.5rem', textAlign:'center', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  avatarWrapper: { marginBottom:'1rem' },
-  avatarImg: { width:'100px', height:'100px', borderRadius:'50%', objectFit:'cover', border:'4px solid #e94560' },
-  avatar: { width:'100px', height:'100px', borderRadius:'50%', background:'#e94560', color:'white', fontSize:'2.5rem', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto', border:'4px solid #1a1a2e' },
-  uploadBtn: { display:'inline-block', background:'#e94560', color:'white', padding:'0.6rem 1.2rem', borderRadius:'8px', cursor:'pointer', marginBottom:'1rem', fontSize:'0.85rem' },
-  username: { color:'#1a1a2e', marginBottom:'0.5rem', fontSize:'1.3rem' },
-  verifiedBadge: { background:'#27ae60', color:'white', padding:'0.2rem 0.8rem', borderRadius:'20px', fontSize:'0.8rem', fontWeight:'bold', display:'inline-block', marginBottom:'1rem' },
-  detailsBox: { textAlign:'left', borderTop:'2px solid #e94560', paddingTop:'1rem' },
-  detailRow: { display:'flex', justifyContent:'space-between', padding:'0.5rem 0', borderBottom:'1px solid #eee' },
-  detailLabel: { color:'#888', fontSize:'0.85rem' },
-  detailValue: { color:'#1a1a2e', fontWeight:'bold', fontSize:'0.85rem' },
-  sellerCard: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  sellerCardTitle: { color:'#1a1a2e', marginBottom:'0.8rem', fontSize:'1rem' },
-  sellerDesc: { color:'#888', fontSize:'0.85rem', marginBottom:'1rem', lineHeight:'1.5' },
-  studentIdInput: { width:'100%', padding:'0.8rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.9rem', boxSizing:'border-box', color:'#1a1a2e', marginBottom:'0.8rem' },
-  submitIdBtn: { width:'100%', padding:'0.8rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  submitMsg: { color:'#27ae60', fontSize:'0.85rem', marginTop:'0.5rem', textAlign:'center' },
-  pendingBox: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem' },
-  pendingText: { color:'#856404', fontSize:'0.85rem', margin:0 },
-  listingsSection: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  sectionHeader: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', borderBottom:'2px solid #e94560', paddingBottom:'0.5rem' },
-  sectionTitle: { color:'#1a1a2e', margin:0, fontSize:'1rem', letterSpacing:'1px' },
-  newBtn: { background:'#1a1a2e', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'8px', cursor:'pointer', fontSize:'0.9rem' },
-  notApprovedNote: { color:'#f39c12', fontSize:'0.85rem', fontWeight:'bold' },
-  notApprovedBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1rem', color:'#856404', fontSize:'0.85rem' },
-  emptyState: { textAlign:'center', padding:'2rem' },
-  emptyIcon: { fontSize:'2.5rem', marginBottom:'0.5rem' },
-  emptyText: { color:'#888' },
-  grid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:'1rem' },
-  card: { background:'#f9f9f9', borderRadius:'12px', overflow:'hidden', border:'1px solid #eee' },
-  cardImage: { width:'100%', aspectRatio:'16/9', objectFit:'cover' },
-  cardBody: { padding:'0.8rem' },
-  cardHeader: { display:'flex', justifyContent:'space-between', marginBottom:'0.5rem', flexWrap:'wrap', gap:'0.3rem' },
-  category: { background:'#1a1a2e', color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.7rem' },
-  statusBadge: { color:'white', padding:'0.2rem 0.5rem', borderRadius:'20px', fontSize:'0.7rem' },
-  cardTitle: { color:'#1a1a2e', marginBottom:'0.3rem', fontSize:'0.9rem' },
-  price: { color:'#e94560', fontWeight:'bold', marginBottom:'0.8rem', fontSize:'0.95rem' },
-  statusBtns: { display:'flex', gap:'0.2rem', marginBottom:'0.5rem' },
-  statusBtn: { flex:1, padding:'0.3rem', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'0.65rem', fontWeight:'bold' },
-  deleteBtn: { width:'100%', padding:'0.5rem', background:'#fff0f0', color:'#e94560', border:'1px solid #e94560', borderRadius:'8px', cursor:'pointer', fontSize:'0.8rem' }
+  page: { fontFamily: font.family, minHeight: '100vh', background: colors.bg },
+  header: { padding: '1.75rem 1.5rem 0.5rem', maxWidth: '1100px', margin: '0 auto' },
+  headerTitle: { fontFamily: fontDisplay, color: colors.text, margin: 0, fontSize: '1.6rem', fontWeight: 600 },
+  container: { maxWidth: '1100px', margin: '0.5rem auto', padding: '0 1.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' },
+  profileCard: { background: colors.surface, borderRadius: radius.lg, padding: '1.75rem', textAlign: 'center', border: `1px solid ${colors.border}` },
+  avatarWrapper: { marginBottom: '1rem' },
+  avatarImg: { width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.accent}` },
+  avatar: { width: '96px', height: '96px', borderRadius: '50%', background: colors.accent, color: 'white', fontSize: '2.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontWeight: 700 },
+  uploadBtn: { display: 'inline-block', background: colors.ink, color: 'white', padding: '0.55rem 1.2rem', borderRadius: radius.pill, cursor: 'pointer', marginBottom: '1rem', fontSize: '0.8rem', fontWeight: 600 },
+  username: { fontFamily: fontDisplay, color: colors.text, marginBottom: '0.5rem', fontSize: '1.3rem', fontWeight: 600 },
+  verifiedBadge: { background: colors.successBg, color: '#16803D', padding: '0.25rem 0.85rem', borderRadius: radius.pill, fontSize: '0.78rem', fontWeight: 700, display: 'inline-block', marginBottom: '1rem' },
+  detailsBox: { textAlign: 'left', borderTop: `1px solid ${colors.border}`, paddingTop: '1rem' },
+  detailRow: { display: 'flex', justifyContent: 'space-between', padding: '0.55rem 0', borderBottom: `1px solid ${colors.border}` },
+  detailLabel: { color: colors.textFaint, fontSize: '0.83rem' },
+  detailValue: { color: colors.text, fontWeight: 700, fontSize: '0.83rem' },
+  sellerCard: { background: colors.surface, borderRadius: radius.lg, padding: '1.75rem', border: `1px solid ${colors.border}` },
+  sellerCardTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '0.8rem', fontSize: '1.15rem', fontWeight: 600 },
+  sellerDesc: { color: colors.textMuted, fontSize: '0.86rem', marginBottom: '1rem', lineHeight: 1.6 },
+  studentIdInput: { width: '100%', padding: '0.8rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '0.9rem', boxSizing: 'border-box', color: colors.text, marginBottom: '0.8rem', fontFamily: font.family, background: colors.bg },
+  submitIdBtn: { width: '100%', padding: '0.8rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700 },
+  submitMsg: { color: '#16803D', fontSize: '0.85rem', marginTop: '0.6rem', textAlign: 'center' },
+  pendingBox: { background: '#FEF6E7', border: '1px solid #F0C36D', borderRadius: radius.sm, padding: '1rem' },
+  pendingText: { color: '#8A6417', fontSize: '0.85rem', margin: 0 },
+  listingsSection: { background: colors.surface, borderRadius: radius.lg, padding: '1.75rem', border: `1px solid ${colors.border}` },
+  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem', paddingBottom: '0.9rem', borderBottom: `1px solid ${colors.border}` },
+  sectionTitle: { fontFamily: fontDisplay, color: colors.text, margin: 0, fontSize: '1.15rem', fontWeight: 600 },
+  newBtn: { background: colors.ink, color: 'white', border: 'none', padding: '0.5rem 1.1rem', borderRadius: radius.pill, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 },
+  notApprovedNote: { color: '#D97706', fontSize: '0.83rem', fontWeight: 700 },
+  notApprovedBanner: { background: '#FEF6E7', border: '1px solid #F0C36D', borderRadius: radius.sm, padding: '1rem', marginBottom: '1rem', color: '#8A6417', fontSize: '0.85rem' },
+  emptyState: { textAlign: 'center', padding: '2rem' },
+  emptyIcon: { fontSize: '2.3rem', marginBottom: '0.5rem' },
+  emptyText: { color: colors.textMuted },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' },
+  card: { background: colors.bg, borderRadius: radius.md, overflow: 'hidden', border: `1px solid ${colors.border}` },
+  cardImage: { width: '100%', aspectRatio: '16/9', objectFit: 'cover' },
+  cardBody: { padding: '0.85rem' },
+  cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.55rem', flexWrap: 'wrap', gap: '0.3rem' },
+  category: { background: colors.accentPale, color: colors.accentDark, padding: '0.22rem 0.55rem', borderRadius: radius.pill, fontSize: '0.68rem', fontWeight: 700 },
+  statusBadge: { color: 'white', padding: '0.22rem 0.55rem', borderRadius: radius.pill, fontSize: '0.68rem', fontWeight: 700 },
+  cardTitle: { color: colors.text, marginBottom: '0.3rem', fontSize: '0.9rem', fontWeight: 700 },
+  price: { fontFamily: fontDisplay, color: colors.accent, fontWeight: 700, marginBottom: '0.8rem', fontSize: '1rem' },
+  statusBtns: { display: 'flex', gap: '0.25rem', marginBottom: '0.55rem' },
+  statusBtn: { flex: 1, padding: '0.35rem', border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '0.63rem', fontWeight: 700, fontFamily: font.family },
+  deleteBtn: { width: '100%', padding: '0.5rem', background: '#FDF0F0', color: '#C0392B', border: '1px solid #E5A5A5', borderRadius: radius.sm, cursor: 'pointer', fontSize: '0.8rem', fontFamily: font.family },
 }
+
 export default Profile

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { getUser, getAuthHeaders } from '../utils/auth'
+import { colors, radius, shadow, font, fontDisplay } from '../theme'
 const API = import.meta.env.VITE_API_URL
+
 function CreateListing() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -16,9 +18,11 @@ function CreateListing() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const user = getUser()
+
   useEffect(() => {
     fetchCategories()
   }, [])
+
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/api/categories/`)
@@ -28,10 +32,12 @@ function CreateListing() {
       console.error(err)
     }
   }
+
   if (!user) {
     navigate('/login')
     return null
   }
+
   if (!user.seller_approved) {
     return (
       <div style={styles.blockedPage}>
@@ -53,12 +59,13 @@ function CreateListing() {
           {user.student_id ? (
             <div style={styles.pendingBox}>⏳ Your student ID <strong>{user.student_id}</strong> is pending approval.</div>
           ) : (
-            <button style={styles.profileBtn} onClick={() => navigate('/profile')}>Go to Profile to Apply</button>
+            <button style={styles.profileBtn} onClick={() => navigate('/profile')} className="btn-hover">Go to Profile to Apply</button>
           )}
         </div>
       </div>
     )
   }
+
   const handleImages = (e) => {
     const files = Array.from(e.target.files)
     files.forEach(file => {
@@ -70,10 +77,12 @@ function CreateListing() {
       reader.readAsDataURL(file)
     })
   }
+
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index))
     setPreviews(prev => prev.filter((_, i) => i !== index))
   }
+
   const handleSubmit = async () => {
     setError('')
     if (!title || !price) { setError('Title and price are required.'); return }
@@ -90,6 +99,7 @@ function CreateListing() {
     }
     setLoading(false)
   }
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -98,14 +108,17 @@ function CreateListing() {
           <p style={styles.subtitle}>Fill in the details to post your item or service</p>
         </div>
         {error && <div style={styles.errorBox}>⚠️ {error}</div>}
+
         <div style={styles.section}>
           <label style={styles.label}>Title *</label>
           <input style={styles.input} type="text" placeholder="What are you selling?" value={title} onChange={e => setTitle(e.target.value)} />
         </div>
+
         <div style={styles.section}>
           <label style={styles.label}>Description</label>
           <textarea style={styles.textarea} placeholder="Describe your item in detail..." value={description} onChange={e => setDescription(e.target.value)} />
         </div>
+
         <div style={styles.row}>
           <div style={{flex:1}}>
             <label style={styles.label}>Price (K) *</label>
@@ -127,9 +140,10 @@ function CreateListing() {
             </select>
           </div>
         </div>
+
         <div style={styles.section}>
           <label style={styles.label}>Images</label>
-          <label style={styles.imageUpload}>
+          <label style={styles.imageUpload} className="chip-hover">
             <span style={styles.uploadIcon}>📷</span>
             <span>Click to upload images</span>
             <input type="file" accept="image/*" multiple onChange={handleImages} style={{display:'none'}} />
@@ -145,9 +159,10 @@ function CreateListing() {
             </div>
           )}
         </div>
+
         <div style={styles.btnRow}>
           <button style={styles.cancelBtn} onClick={() => navigate('/listings')}>Cancel</button>
-          <button style={{...styles.submitBtn, opacity: loading ? 0.7 : 1}} onClick={handleSubmit} disabled={loading}>
+          <button style={{...styles.submitBtn, opacity: loading ? 0.7 : 1}} onClick={handleSubmit} disabled={loading} className="btn-hover">
             {loading ? 'Posting...' : 'Post Listing'}
           </button>
         </div>
@@ -155,36 +170,38 @@ function CreateListing() {
     </div>
   )
 }
+
 const styles = {
-  page: { minHeight:'100vh', background:'#f5f5f5', padding:'1.5rem', fontFamily:'Arial, sans-serif' },
-  container: { maxWidth:'700px', margin:'0 auto', background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  formHeader: { marginBottom:'1.5rem', borderBottom:'2px solid #f0f0f0', paddingBottom:'1rem' },
-  title: { color:'#1a1a2e', fontSize:'1.4rem', marginBottom:'0.3rem' },
-  subtitle: { color:'#888', fontSize:'0.88rem' },
-  errorBox: { background:'#fff0f0', border:'1px solid #e94560', color:'#c0392b', padding:'0.8rem', borderRadius:'8px', marginBottom:'1rem', fontSize:'0.9rem' },
-  section: { marginBottom:'1.2rem' },
-  row: { display:'flex', gap:'0.8rem', marginBottom:'1.2rem', flexWrap:'wrap' },
-  label: { display:'block', color:'#1a1a2e', fontWeight:'bold', marginBottom:'0.4rem', fontSize:'0.88rem' },
-  input: { width:'100%', padding:'0.8rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.95rem', boxSizing:'border-box', outline:'none', color:'#1a1a2e', background:'#fafafa' },
-  textarea: { width:'100%', padding:'0.8rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.95rem', boxSizing:'border-box', height:'100px', outline:'none', background:'#fafafa', resize:'vertical', color:'#1a1a2e' },
-  imageUpload: { display:'flex', alignItems:'center', gap:'0.8rem', padding:'1.2rem', border:'2px dashed #ddd', borderRadius:'8px', cursor:'pointer', color:'#888', justifyContent:'center' },
-  uploadIcon: { fontSize:'1.5rem' },
-  previewGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(90px, 1fr))', gap:'0.5rem', marginTop:'0.8rem' },
-  previewWrapper: { position:'relative' },
-  preview: { width:'100%', aspectRatio:'1', objectFit:'cover', borderRadius:'8px' },
-  removeBtn: { position:'absolute', top:'4px', right:'4px', background:'#e94560', color:'white', border:'none', borderRadius:'50%', width:'20px', height:'20px', cursor:'pointer', fontSize:'0.7rem' },
-  btnRow: { display:'flex', gap:'1rem', marginTop:'1.5rem' },
-  cancelBtn: { flex:1, padding:'0.9rem', background:'white', color:'#1a1a2e', border:'2px solid #1a1a2e', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'0.95rem' },
-  submitBtn: { flex:2, padding:'0.9rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'0.95rem' },
-  blockedPage: { minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem', background:'#f5f5f5' },
-  blockedCard: { background:'white', borderRadius:'12px', padding:'2rem', maxWidth:'500px', width:'100%', textAlign:'center', boxShadow:'0 4px 15px rgba(0,0,0,0.08)' },
-  blockedIcon: { fontSize:'3rem', marginBottom:'1rem' },
-  blockedTitle: { color:'#1a1a2e', marginBottom:'1rem' },
-  blockedText: { color:'#666', lineHeight:'1.6', marginBottom:'1.5rem', fontSize:'0.9rem' },
-  steps: { display:'flex', flexDirection:'column', gap:'0.8rem', marginBottom:'1.5rem', textAlign:'left' },
-  step: { display:'flex', alignItems:'center', gap:'1rem', color:'#555', fontSize:'0.9rem' },
-  stepNum: { width:'28px', height:'28px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', flexShrink:0 },
-  pendingBox: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', color:'#856404', fontSize:'0.9rem' },
-  profileBtn: { background:'#e94560', color:'white', border:'none', padding:'0.9rem 2rem', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem' }
+  page: { minHeight: '100vh', background: colors.bg, padding: '1.75rem 1.5rem', fontFamily: font.family },
+  container: { maxWidth: '700px', margin: '0 auto', background: colors.surface, borderRadius: radius.lg, padding: '1.75rem', border: `1px solid ${colors.border}` },
+  formHeader: { marginBottom: '1.5rem', borderBottom: `1px solid ${colors.border}`, paddingBottom: '1rem' },
+  title: { fontFamily: fontDisplay, color: colors.text, fontSize: '1.45rem', marginBottom: '0.3rem', fontWeight: 600 },
+  subtitle: { color: colors.textMuted, fontSize: '0.88rem' },
+  errorBox: { background: '#FDF0F0', border: '1px solid #E5A5A5', color: '#C0392B', padding: '0.8rem', borderRadius: radius.sm, marginBottom: '1rem', fontSize: '0.9rem' },
+  section: { marginBottom: '1.2rem' },
+  row: { display: 'flex', gap: '0.8rem', marginBottom: '1.2rem', flexWrap: 'wrap' },
+  label: { display: 'block', color: colors.text, fontWeight: 700, marginBottom: '0.4rem', fontSize: '0.86rem' },
+  input: { width: '100%', padding: '0.8rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '0.92rem', boxSizing: 'border-box', outline: 'none', color: colors.text, background: colors.bg, fontFamily: font.family },
+  textarea: { width: '100%', padding: '0.8rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '0.92rem', boxSizing: 'border-box', height: '100px', outline: 'none', background: colors.bg, resize: 'vertical', color: colors.text, fontFamily: font.family },
+  imageUpload: { display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1.2rem', border: `2px dashed ${colors.borderStrong}`, borderRadius: radius.sm, cursor: 'pointer', color: colors.textMuted, justifyContent: 'center' },
+  uploadIcon: { fontSize: '1.5rem' },
+  previewGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '0.5rem', marginTop: '0.8rem' },
+  previewWrapper: { position: 'relative' },
+  preview: { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: radius.sm },
+  removeBtn: { position: 'absolute', top: '4px', right: '4px', background: colors.accent, color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '0.7rem' },
+  btnRow: { display: 'flex', gap: '1rem', marginTop: '1.5rem' },
+  cancelBtn: { flex: 1, padding: '0.9rem', background: colors.surface, color: colors.text, border: `1px solid ${colors.borderStrong}`, borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700, fontSize: '0.92rem', fontFamily: font.family },
+  submitBtn: { flex: 2, padding: '0.9rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700, fontSize: '0.92rem' },
+  blockedPage: { minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: colors.bg },
+  blockedCard: { background: colors.surface, borderRadius: radius.lg, padding: '2.25rem', maxWidth: '500px', width: '100%', textAlign: 'center', border: `1px solid ${colors.border}` },
+  blockedIcon: { fontSize: '2.8rem', marginBottom: '1rem' },
+  blockedTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '1rem', fontWeight: 600 },
+  blockedText: { color: colors.textMuted, lineHeight: 1.65, marginBottom: '1.5rem', fontSize: '0.9rem' },
+  steps: { display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem', textAlign: 'left' },
+  step: { display: 'flex', alignItems: 'center', gap: '1rem', color: colors.textMuted, fontSize: '0.9rem' },
+  stepNum: { width: '28px', height: '28px', borderRadius: '50%', background: colors.accent, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 },
+  pendingBox: { background: '#FEF6E7', border: '1px solid #F0C36D', borderRadius: radius.sm, padding: '1rem', color: '#8A6417', fontSize: '0.9rem' },
+  profileBtn: { background: colors.accent, color: 'white', border: 'none', padding: '0.9rem 2rem', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem' },
 }
+
 export default CreateListing

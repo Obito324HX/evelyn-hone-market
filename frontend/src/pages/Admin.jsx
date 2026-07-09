@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { colors, radius, shadow, font, fontDisplay } from '../theme'
 
 const API = import.meta.env.VITE_API_URL
 const ADMIN_KEY = 'evelyn-hone-admin-2026'
@@ -207,7 +208,7 @@ function Admin() {
         <p style={styles.loginSubtitle}>Evelyn Hone Market</p>
         {error && <div style={styles.errorBox}>{error}</div>}
         <input style={styles.loginInput} type="password" placeholder="Enter admin password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-        <button style={styles.loginBtn} onClick={handleLogin}>Login as Admin</button>
+        <button style={styles.loginBtn} onClick={handleLogin} className="btn-hover">Login as Admin</button>
         <button style={styles.backLink} onClick={() => navigate('/')}>← Back to Market</button>
       </div>
     </div>
@@ -302,15 +303,15 @@ function Admin() {
                     </div>
                   </div>
                   <div style={styles.userActions}>
-                    <button style={{...styles.smallBtn, background: u.verified ? '#f39c12' : '#27ae60'}} onClick={() => verifyUser(u.id)}>
+                    <button style={{...styles.smallBtn, background: u.verified ? '#D97706' : '#22C55E'}} onClick={() => verifyUser(u.id)}>
                       {u.verified ? 'Unverify' : 'Verify'}
                     </button>
                     {u.student_id && (
-                      <button style={{...styles.smallBtn, background: u.seller_approved ? '#f39c12' : '#27ae60'}} onClick={() => approveSeller(u.id)}>
+                      <button style={{...styles.smallBtn, background: u.seller_approved ? '#D97706' : '#22C55E'}} onClick={() => approveSeller(u.id)}>
                         {u.seller_approved ? 'Revoke' : 'Approve'}
                       </button>
                     )}
-                    <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteUser(u.id)}>Delete</button>
+                    <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => deleteUser(u.id)}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -326,11 +327,11 @@ function Admin() {
                   <div>
                     <p style={styles.listingTitle}>{l.title}</p>
                     <p style={styles.listingMeta}>K{l.price} | {l.category} | Seller #{l.seller_id}</p>
-                    <span style={{...styles.statusPill, background: l.status === 'available' ? '#27ae60' : l.status === 'reserved' ? '#f39c12' : '#333'}}>
+                    <span style={{...styles.statusPill, background: l.status === 'available' ? '#22C55E' : l.status === 'reserved' ? '#D97706' : colors.ink}}>
                       {l.status}
                     </span>
                   </div>
-                  <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteListing(l.id)}>Delete</button>
+                  <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => deleteListing(l.id)}>Delete</button>
                 </div>
               ))}
             </div>
@@ -341,7 +342,7 @@ function Admin() {
             <h2 style={styles.pageTitle}>🗂 Category Management</h2>
             <div style={styles.settingsCard}>
               <h3 style={styles.settingsTitle}>Add New Category</h3>
-              <div style={styles.catForm}>
+              <div>
                 <input
                   style={styles.settingsInput}
                   type="text"
@@ -362,7 +363,7 @@ function Admin() {
                   </div>
                   <p style={styles.selectedIcon}>Selected: <span style={{fontSize:'1.5rem'}}>{newCatIcon}</span></p>
                 </div>
-                <button style={styles.settingsBtn} onClick={addCategory}>Add Category</button>
+                <button style={styles.settingsBtn} onClick={addCategory} className="btn-hover">Add Category</button>
                 {catMsg && <p style={styles.settingsMsg}>{catMsg}</p>}
               </div>
             </div>
@@ -373,7 +374,7 @@ function Admin() {
                   <div key={cat.id} style={styles.catRow}>
                     <span style={styles.catIcon2}>{cat.icon}</span>
                     <span style={styles.catName2}>{cat.name}</span>
-                    <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteCategory(cat.id, cat.name)}>
+                    <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => deleteCategory(cat.id, cat.name)}>
                       Delete
                     </button>
                   </div>
@@ -396,7 +397,7 @@ function Admin() {
                     <p style={styles.reportDate}>{new Date(r.created_at).toLocaleDateString()}</p>
                     <div style={styles.reportActions}>
                       <button style={styles.dismissBtn} onClick={() => dismissReport(r.id)}>Dismiss</button>
-                      <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => deleteReportedListing(r.listing_id, r.id)}>Delete Listing</button>
+                      <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => deleteReportedListing(r.listing_id, r.id)}>Delete Listing</button>
                     </div>
                   </div>
                 ))}
@@ -411,7 +412,7 @@ function Admin() {
               <h3 style={styles.settingsTitle}>🔑 Change Password</h3>
               <input style={styles.settingsInput} type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
               <input style={styles.settingsInput} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-              <button style={styles.settingsBtn} onClick={changePassword}>Update Password</button>
+              <button style={styles.settingsBtn} onClick={changePassword} className="btn-hover">Update Password</button>
               {passwordMsg && <p style={styles.settingsMsg}>{passwordMsg}</p>}
             </div>
             <div style={styles.settingsCard}>
@@ -419,7 +420,7 @@ function Admin() {
               {admins.map((a, i) => (
                 <div key={i} style={styles.adminRow}>
                   <span style={styles.adminName}>👤 {a.username}</span>
-                  {i > 0 ? <button style={{...styles.smallBtn, background:'#e94560'}} onClick={() => removeAdmin(i)}>Remove</button>
+                  {i > 0 ? <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => removeAdmin(i)}>Remove</button>
                   : <span style={styles.mainAdminBadge}>Main Admin</span>}
                 </div>
               ))}
@@ -427,7 +428,7 @@ function Admin() {
                 <h4 style={styles.addAdminTitle}>Add New Admin</h4>
                 <input style={styles.settingsInput} type="text" placeholder="Admin name" value={newAdminName} onChange={e => setNewAdminName(e.target.value)} />
                 <input style={styles.settingsInput} type="password" placeholder="Admin password" value={newAdminPass} onChange={e => setNewAdminPass(e.target.value)} />
-                <button style={styles.settingsBtn} onClick={addAdmin}>Add Admin</button>
+                <button style={styles.settingsBtn} onClick={addAdmin} className="btn-hover">Add Admin</button>
                 {adminMsg && <p style={styles.settingsMsg}>{adminMsg}</p>}
               </div>
             </div>
@@ -439,83 +440,82 @@ function Admin() {
 }
 
 const styles = {
-  loginPage: { minHeight:'100vh', background:'#1a1a2e', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Arial, sans-serif', padding:'1rem' },
-  loginCard: { background:'white', borderRadius:'12px', padding:'2rem', width:'100%', maxWidth:'400px', textAlign:'center', boxShadow:'0 10px 30px rgba(0,0,0,0.3)' },
-  loginIcon: { fontSize:'3rem', marginBottom:'1rem' },
-  loginTitle: { color:'#1a1a2e', marginBottom:'0.3rem' },
-  loginSubtitle: { color:'#888', marginBottom:'1.5rem', fontSize:'0.9rem' },
-  errorBox: { background:'#fff0f0', border:'1px solid #e94560', color:'#e94560', padding:'0.8rem', borderRadius:'8px', marginBottom:'1rem' },
-  loginInput: { width:'100%', padding:'0.9rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'1rem', boxSizing:'border-box', marginBottom:'1rem', color:'#1a1a2e', outline:'none' },
-  loginBtn: { width:'100%', padding:'0.9rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem', marginBottom:'1rem' },
-  backLink: { background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:'0.9rem' },
-  page: { fontFamily:'Arial, sans-serif', minHeight:'100vh', background:'#f5f5f5' },
-  topBar: { background:'#1a1a2e', padding:'1rem 1.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 },
-  menuBtn: { background:'none', border:'none', color:'white', fontSize:'1.5rem', cursor:'pointer', minWidth:'44px', minHeight:'44px' },
-  topBarTitle: { color:'white', fontWeight:'bold', fontSize:'1rem' },
-  backBtn: { background:'transparent', color:'#ccc', border:'1px solid #444', padding:'0.4rem 0.8rem', borderRadius:'6px', cursor:'pointer', fontSize:'0.85rem' },
-  sidebar: { background:'#1a1a2e', padding:'1rem', display:'flex', flexDirection:'column', gap:'0.3rem' },
-  sidebarBtn: { background:'transparent', color:'#ccc', border:'none', padding:'0.9rem 1rem', borderRadius:'8px', cursor:'pointer', textAlign:'left', fontSize:'0.95rem' },
-  activeSidebarBtn: { background:'rgba(233,69,96,0.2)', color:'#e94560' },
-  content: { padding:'1.5rem' },
-  pageTitle: { color:'#1a1a2e', marginBottom:'1.5rem', fontSize:'1.3rem' },
-  alertBanner: { background:'#fff9e6', border:'1px solid #f39c12', borderRadius:'8px', padding:'1rem', marginBottom:'1.5rem', color:'#856404', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem' },
-  alertBtn: { background:'#f39c12', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'6px', cursor:'pointer', fontWeight:'bold', whiteSpace:'nowrap' },
-  statsGrid: { display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'1rem' },
-  statCard: { background:'white', borderRadius:'12px', padding:'1.2rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  statIcon: { fontSize:'1.8rem', marginBottom:'0.3rem' },
-  statNumber: { fontSize:'1.8rem', fontWeight:'bold', color:'#e94560' },
-  statLabel: { color:'#888', fontSize:'0.8rem', marginTop:'0.2rem' },
-  cardList: { display:'flex', flexDirection:'column', gap:'1rem' },
-  sellerCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  sellerInfo: { display:'flex', gap:'1rem', alignItems:'flex-start', marginBottom:'1rem' },
-  sellerAvatar: { width:'44px', height:'44px', borderRadius:'50%', background:'#e94560', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'1.2rem', flexShrink:0 },
-  sellerName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.2rem' },
-  sellerEmail: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
-  studentId: { color:'#1a1a2e', fontSize:'0.85rem', margin:0 },
-  sellerActions: { display:'flex', gap:'0.8rem' },
-  approveBtn: { flex:1, padding:'0.7rem', background:'#27ae60', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  rejectBtn: { flex:1, padding:'0.7rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  userCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  userInfo: { display:'flex', gap:'1rem', alignItems:'flex-start', marginBottom:'1rem' },
-  userAvatar: { width:'40px', height:'40px', borderRadius:'50%', background:'#1a1a2e', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', flexShrink:0 },
-  userName: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.2rem', display:'flex', alignItems:'center', gap:'0.5rem' },
-  userEmail: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
-  userMeta: { color:'#555', fontSize:'0.8rem', margin:0 },
-  vBadge: { background:'#27ae60', color:'white', padding:'0.1rem 0.4rem', borderRadius:'10px', fontSize:'0.7rem' },
-  userActions: { display:'flex', gap:'0.5rem', flexWrap:'wrap' },
-  smallBtn: { color:'white', border:'none', padding:'0.4rem 0.8rem', borderRadius:'6px', cursor:'pointer', fontSize:'0.8rem', fontWeight:'bold' },
-  listingCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem' },
-  listingTitle: { color:'#1a1a2e', fontWeight:'bold', margin:'0 0 0.3rem' },
-  listingMeta: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.5rem' },
-  statusPill: { color:'white', padding:'0.2rem 0.6rem', borderRadius:'20px', fontSize:'0.75rem' },
-  reportCard: { background:'white', borderRadius:'12px', padding:'1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' },
-  reportReason: { color:'#1a1a2e', margin:'0 0 0.3rem' },
-  reportMeta: { color:'#888', fontSize:'0.85rem', margin:'0 0 0.2rem' },
-  reportDate: { color:'#aaa', fontSize:'0.8rem', margin:'0 0 1rem' },
-  reportActions: { display:'flex', gap:'0.8rem' },
-  dismissBtn: { padding:'0.5rem 1rem', background:'#f5f5f5', color:'#555', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  emptyState: { textAlign:'center', padding:'3rem', background:'white', borderRadius:'12px', color:'#888' },
-  settingsCard: { background:'white', borderRadius:'12px', padding:'1.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'1rem' },
-  settingsTitle: { color:'#1a1a2e', marginBottom:'1rem', fontSize:'1rem' },
-  settingsInput: { width:'100%', padding:'0.8rem', borderRadius:'8px', border:'2px solid #eee', fontSize:'0.95rem', boxSizing:'border-box', color:'#1a1a2e', marginBottom:'0.8rem' },
-  settingsBtn: { width:'100%', padding:'0.8rem', background:'#e94560', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' },
-  settingsMsg: { color:'#27ae60', fontSize:'0.85rem', marginTop:'0.5rem', textAlign:'center' },
-  adminRow: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.8rem 0', borderBottom:'1px solid #eee' },
-  adminName: { color:'#1a1a2e', fontSize:'0.95rem' },
-  mainAdminBadge: { background:'#e94560', color:'white', padding:'0.2rem 0.6rem', borderRadius:'20px', fontSize:'0.75rem' },
-  addAdminForm: { marginTop:'1rem', paddingTop:'1rem', borderTop:'1px solid #eee' },
-  addAdminTitle: { color:'#1a1a2e', marginBottom:'0.8rem', fontSize:'0.95rem' },
-  catForm: {},
-  iconPicker: { marginBottom:'1rem' },
-  iconLabel: { color:'#888', fontSize:'0.85rem', marginBottom:'0.5rem' },
-  iconGrid: { display:'grid', gridTemplateColumns:'repeat(6, 1fr)', gap:'0.4rem', marginBottom:'0.5rem' },
-  iconBtn: { padding:'0.4rem', border:'2px solid #eee', borderRadius:'8px', cursor:'pointer', background:'white', fontSize:'1.2rem' },
-  activeIconBtn: { border:'2px solid #e94560', background:'#fff0f0' },
-  selectedIcon: { color:'#888', fontSize:'0.85rem' },
-  catList: { display:'flex', flexDirection:'column', gap:'0.5rem' },
-  catRow: { display:'flex', alignItems:'center', gap:'1rem', padding:'0.7rem', background:'#f9f9f9', borderRadius:'8px' },
-  catIcon2: { fontSize:'1.5rem' },
-  catName2: { flex:1, color:'#1a1a2e', fontWeight:'bold' }
+  loginPage: { minHeight: '100vh', background: colors.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: font.family, padding: '1.5rem' },
+  loginCard: { background: colors.surface, borderRadius: radius.lg, padding: '2.25rem', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' },
+  loginIcon: { fontSize: '2.8rem', marginBottom: '1rem' },
+  loginTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '0.3rem', fontWeight: 600 },
+  loginSubtitle: { color: colors.textMuted, marginBottom: '1.5rem', fontSize: '0.9rem' },
+  errorBox: { background: '#FDF0F0', border: '1px solid #E5A5A5', color: '#C0392B', padding: '0.8rem', borderRadius: radius.sm, marginBottom: '1rem' },
+  loginInput: { width: '100%', padding: '0.9rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '1rem', boxSizing: 'border-box', marginBottom: '1rem', color: colors.text, outline: 'none', fontFamily: font.family },
+  loginBtn: { width: '100%', padding: '0.9rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700, fontSize: '1rem', marginBottom: '1rem' },
+  backLink: { background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '0.9rem' },
+  page: { fontFamily: font.family, minHeight: '100vh', background: colors.bg },
+  topBar: { background: colors.ink, padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 },
+  menuBtn: { background: 'none', border: 'none', color: 'white', fontSize: '1.4rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' },
+  topBarTitle: { fontFamily: fontDisplay, color: 'white', fontWeight: 600, fontSize: '1rem' },
+  backBtn: { background: 'transparent', color: '#CFC9D6', border: '1px solid rgba(255,255,255,0.16)', padding: '0.4rem 0.9rem', borderRadius: radius.pill, cursor: 'pointer', fontSize: '0.82rem' },
+  sidebar: { background: colors.ink, padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' },
+  sidebarBtn: { background: 'transparent', color: '#CFC9D6', border: 'none', padding: '0.9rem 1rem', borderRadius: radius.sm, cursor: 'pointer', textAlign: 'left', fontSize: '0.92rem', fontFamily: font.family },
+  activeSidebarBtn: { background: colors.accentGlow, color: colors.accent },
+  content: { padding: '1.5rem' },
+  pageTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '1.5rem', fontSize: '1.3rem', fontWeight: 600 },
+  alertBanner: { background: '#FEF6E7', border: '1px solid #F0C36D', borderRadius: radius.sm, padding: '1rem', marginBottom: '1.5rem', color: '#8A6417', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' },
+  alertBtn: { background: '#D97706', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: radius.sm, cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' },
+  statCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', textAlign: 'center', border: `1px solid ${colors.border}` },
+  statIcon: { fontSize: '1.7rem', marginBottom: '0.3rem' },
+  statNumber: { fontFamily: fontDisplay, fontSize: '1.7rem', fontWeight: 700, color: colors.accent },
+  statLabel: { color: colors.textFaint, fontSize: '0.8rem', marginTop: '0.2rem' },
+  cardList: { display: 'flex', flexDirection: 'column', gap: '1rem' },
+  sellerCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}` },
+  sellerInfo: { display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' },
+  sellerAvatar: { width: '44px', height: '44px', borderRadius: '50%', background: colors.accent, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.15rem', flexShrink: 0 },
+  sellerName: { color: colors.text, fontWeight: 700, margin: '0 0 0.2rem' },
+  sellerEmail: { color: colors.textMuted, fontSize: '0.85rem', margin: '0 0 0.2rem' },
+  studentId: { color: colors.text, fontSize: '0.85rem', margin: 0 },
+  sellerActions: { display: 'flex', gap: '0.8rem' },
+  approveBtn: { flex: 1, padding: '0.7rem', background: '#22C55E', color: 'white', border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontWeight: 700, fontFamily: font.family },
+  rejectBtn: { flex: 1, padding: '0.7rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontWeight: 700, fontFamily: font.family },
+  userCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}` },
+  userInfo: { display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' },
+  userAvatar: { width: '40px', height: '40px', borderRadius: '50%', background: colors.ink, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 },
+  userName: { color: colors.text, fontWeight: 700, margin: '0 0 0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  userEmail: { color: colors.textMuted, fontSize: '0.85rem', margin: '0 0 0.2rem' },
+  userMeta: { color: colors.textMuted, fontSize: '0.8rem', margin: 0 },
+  vBadge: { background: '#22C55E', color: 'white', padding: '0.1rem 0.45rem', borderRadius: radius.pill, fontSize: '0.7rem' },
+  userActions: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
+  smallBtn: { color: 'white', border: 'none', padding: '0.4rem 0.85rem', borderRadius: radius.sm, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, fontFamily: font.family },
+  listingCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' },
+  listingTitle: { color: colors.text, fontWeight: 700, margin: '0 0 0.3rem' },
+  listingMeta: { color: colors.textMuted, fontSize: '0.85rem', margin: '0 0 0.5rem' },
+  statusPill: { color: 'white', padding: '0.2rem 0.65rem', borderRadius: radius.pill, fontSize: '0.75rem' },
+  reportCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}` },
+  reportReason: { color: colors.text, margin: '0 0 0.3rem' },
+  reportMeta: { color: colors.textMuted, fontSize: '0.85rem', margin: '0 0 0.2rem' },
+  reportDate: { color: colors.textFaint, fontSize: '0.8rem', margin: '0 0 1rem' },
+  reportActions: { display: 'flex', gap: '0.8rem' },
+  dismissBtn: { padding: '0.5rem 1rem', background: colors.bg, color: colors.textMuted, border: `1px solid ${colors.border}`, borderRadius: radius.sm, cursor: 'pointer', fontWeight: 700, fontFamily: font.family },
+  emptyState: { textAlign: 'center', padding: '3rem', background: colors.surface, borderRadius: radius.md, color: colors.textMuted, border: `1px solid ${colors.border}` },
+  settingsCard: { background: colors.surface, borderRadius: radius.md, padding: '1.5rem', border: `1px solid ${colors.border}`, marginBottom: '1rem' },
+  settingsTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '1rem', fontSize: '1.05rem', fontWeight: 600 },
+  settingsInput: { width: '100%', padding: '0.8rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '0.95rem', boxSizing: 'border-box', color: colors.text, marginBottom: '0.8rem', fontFamily: font.family, background: colors.bg },
+  settingsBtn: { width: '100%', padding: '0.8rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700 },
+  settingsMsg: { color: '#16803D', fontSize: '0.85rem', marginTop: '0.5rem', textAlign: 'center' },
+  adminRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 0', borderBottom: `1px solid ${colors.border}` },
+  adminName: { color: colors.text, fontSize: '0.95rem' },
+  mainAdminBadge: { background: colors.accent, color: 'white', padding: '0.2rem 0.65rem', borderRadius: radius.pill, fontSize: '0.75rem' },
+  addAdminForm: { marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
+  addAdminTitle: { color: colors.text, marginBottom: '0.8rem', fontSize: '0.95rem', fontWeight: 700 },
+  iconPicker: { marginBottom: '1rem' },
+  iconLabel: { color: colors.textMuted, fontSize: '0.85rem', marginBottom: '0.5rem' },
+  iconGrid: { display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.4rem', marginBottom: '0.5rem' },
+  iconBtn: { padding: '0.4rem', border: `1px solid ${colors.border}`, borderRadius: radius.sm, cursor: 'pointer', background: colors.surface, fontSize: '1.2rem' },
+  activeIconBtn: { border: `1px solid ${colors.accent}`, background: colors.accentPale },
+  selectedIcon: { color: colors.textMuted, fontSize: '0.85rem' },
+  catList: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
+  catRow: { display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem', background: colors.bg, borderRadius: radius.sm },
+  catIcon2: { fontSize: '1.4rem' },
+  catName2: { flex: 1, color: colors.text, fontWeight: 700 },
 }
 
 export default Admin
