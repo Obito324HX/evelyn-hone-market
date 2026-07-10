@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models import db, Category
+from routes.admin import require_admin
 
 categories = Blueprint('categories', __name__)
 
@@ -23,7 +24,10 @@ def get_categories():
         cats = Category.query.order_by(Category.name).all()
     return jsonify([{'id': c.id, 'name': c.name, 'icon': c.icon} for c in cats]), 200
 
+# Previously had NO protection at all — anyone could create or delete
+# categories with a plain request, no key, no login, nothing.
 @categories.route('/', methods=['POST'])
+@require_admin
 def add_category():
     data = request.get_json()
     name = data.get('name', '').strip()
@@ -40,6 +44,7 @@ def add_category():
     return jsonify({'message': 'Category added!', 'id': cat.id}), 201
 
 @categories.route('/<int:id>', methods=['DELETE'])
+@require_admin
 def delete_category(id):
     cat = Category.query.get_or_404(id)
     db.session.delete(cat)

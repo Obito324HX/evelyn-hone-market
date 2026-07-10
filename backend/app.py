@@ -11,6 +11,15 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'evelyn-hone-jwt-secret-2026')
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
+    if not os.environ.get('JWT_SECRET_KEY'):
+        print(
+            '\n⚠️  WARNING: JWT_SECRET_KEY is not set in the environment. '
+            'Using a public fallback value means anyone who has seen this '
+            'source code (e.g. on GitHub) can forge valid login tokens for '
+            'ANY user, including admins. Set a real random JWT_SECRET_KEY '
+            'in your deployment environment before going live.\n'
+        )
+
     database_url = os.environ.get('DATABASE_URL', 'sqlite:///market.db')
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)

@@ -55,7 +55,8 @@ def register():
             'phone': user.phone,
             'verified': user.verified,
             'seller_approved': user.seller_approved,
-            'student_id': user.student_id
+            'student_id': user.student_id,
+            'is_admin': user.is_admin
         }
     }), 201
 
@@ -82,7 +83,8 @@ def login():
             'phone': user.phone,
             'verified': user.verified,
             'seller_approved': user.seller_approved,
-            'student_id': user.student_id
+            'student_id': user.student_id,
+            'is_admin': user.is_admin
         }
     }), 200
 

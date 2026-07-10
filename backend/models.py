@@ -12,6 +12,7 @@ class User(db.Model):
     verified = db.Column(db.Boolean, default=False)
     student_id = db.Column(db.String(50), nullable=True)
     seller_approved = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     listings = db.relationship('Listing', backref='seller', lazy=True)
 
