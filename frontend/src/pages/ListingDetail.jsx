@@ -101,7 +101,7 @@ function ListingDetail() {
         <div style={styles.reportBox}>
           <h4 style={styles.reportTitle}>Report this listing</h4>
           <p style={styles.reportSubtitle}>Why are you reporting this listing?</p>
-          <div style={styles.reasonGrid}>
+          <div style={styles.reasonGrid} className="ehm-reason-grid">
             {['Scam or fraud', 'Inappropriate content', 'Wrong category', 'Already sold', 'Spam', 'Other'].map(r => (
               <button
                 key={r}
@@ -125,12 +125,12 @@ function ListingDetail() {
         </div>
       )}
 
-      <div style={styles.container}>
+      <div style={styles.container} className="ehm-detail-container">
         <div style={styles.imageSection}>
           {listing.images && listing.images[0] ? (
-            <img src={listing.images[0]} alt={listing.title} style={styles.image} />
+            <img src={listing.images[0]} alt={listing.title} style={styles.image} className="ehm-detail-image" />
           ) : (
-            <div style={styles.noImage}>
+            <div style={styles.noImage} className="ehm-detail-image">
               <span style={{fontSize:'3rem'}}>📷</span>
               <p>No Image Available</p>
             </div>

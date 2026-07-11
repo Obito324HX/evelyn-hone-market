@@ -37,15 +37,15 @@ function Home() {
   return (
     <div style={styles.container}>
       {/* HERO — editorial two-column, not a full-bleed gradient banner */}
-      <div style={styles.hero}>
+      <div style={styles.hero} className="ehm-hero-grid">
         <div style={styles.heroLeft}>
           <div style={styles.heroEyebrow}>Evelyn Hone College · Campus Only</div>
           <h1 style={styles.heroTitle}>
-            Buy, sell, and <em style={styles.heroEm}>trade</em> — without leaving campus.
+            Buy, sell, and <em style={styles.heroEm}>trade.</em> Without leaving campus.
           </h1>
           <p style={styles.heroDesc}>
             The marketplace built for Evelyn Hone students. Textbooks, electronics, services,
-            and more — from people you actually go to school with.
+            and more, from people you actually go to school with.
           </p>
           <div style={styles.heroActions}>
             <Link to="/listings" style={styles.primaryBtn} className="btn-hover">Browse Listings</Link>
@@ -58,7 +58,7 @@ function Home() {
           </div>
         </div>
 
-        <div style={styles.heroRight}>
+        <div style={styles.heroRight} className="ehm-hero-right">
           <div style={styles.bentoGrid}>
             <div style={{...styles.bentoTile, ...styles.bentoBig}}>
               <span style={styles.bentoEmoji}>📚</span>
@@ -72,7 +72,7 @@ function Home() {
               <span style={styles.bentoEmoji}>👕</span>
               <span style={styles.bentoLabel}>Clothing</span>
             </div>
-            <div style={{...styles.bentoTile, ...styles.bentoAccent}}>
+            <div style={styles.bentoTile}>
               <span style={styles.bentoEmoji}>🔧</span>
               <span style={styles.bentoLabel}>Services</span>
             </div>
@@ -100,12 +100,12 @@ function Home() {
             <h2 style={styles.sectionTitle}>Trending Now</h2>
             <Link to="/listings" style={styles.seeAll} className="link-hover">See all →</Link>
           </div>
-          <div style={styles.trendGrid}>
+          <div style={styles.trendGrid} className="ehm-trend-grid">
             {trending.map((listing, i) => (
               <div
                 key={listing.id}
                 style={{...styles.trendCard, ...(i === 0 ? styles.trendCardBig : {})}}
-                className="card-hover"
+                className={`card-hover ${i === 0 ? 'ehm-trend-big' : ''}`}
                 onClick={() => navigate(`/listings/${listing.id}`)}
               >
                 {listing.images && listing.images[0] ? (

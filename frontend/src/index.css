@@ -94,3 +94,55 @@ input, textarea, select {
 .nav-item:active {
   transform: scale(0.92);
 }
+
+/* ============================================================
+   Responsive layout classes.
+   The pages in this app use inline style objects for most styling
+   (colors, spacing, etc.), which can't express @media queries.
+   These specific classes exist only for structural grid layouts that
+   genuinely need to change shape between mobile and desktop — image
+   splits, hero columns, icon pickers. Everything else stays inline.
+   ============================================================ */
+
+@media (max-width: 860px) {
+  .ehm-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.75rem !important;
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+  .ehm-hero-right {
+    order: -1;
+  }
+  .ehm-detail-container {
+    grid-template-columns: 1fr !important;
+  }
+  .ehm-detail-image {
+    min-height: 260px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ehm-trend-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .ehm-trend-big {
+    grid-column: span 2 !important;
+    grid-row: span 1 !important;
+  }
+  .ehm-icon-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  .ehm-reason-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .ehm-trend-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ehm-trend-big {
+    grid-column: span 1 !important;
+  }
+}

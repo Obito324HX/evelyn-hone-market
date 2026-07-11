@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { saveAuth, getAuthHeaders, getUser, logout as clearAuth } from '../utils/auth'
 import { colors, radius, shadow, font, fontDisplay } from '../theme'
 
 const API = import.meta.env.VITE_API_URL
-const ADMIN_KEY = 'evelyn-hone-admin-2026'
-const headers = { 'X-Admin-Key': ADMIN_KEY }
 
 function Admin() {
   const [tab, setTab] = useState('stats')
@@ -17,21 +16,25 @@ function Admin() {
   const [newCatName, setNewCatName] = useState('')
   const [newCatIcon, setNewCatIcon] = useState('📦')
   const [catMsg, setCatMsg] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
-  const [admins, setAdmins] = useState(() => {
-    const saved = localStorage.getItem('admin_accounts')
-    return saved ? JSON.parse(saved) : [{ username: 'Admin', password: 'admin2026' }]
-  })
-  const [newAdminName, setNewAdminName] = useState('')
-  const [newAdminPass, setNewAdminPass] = useState('')
   const [adminMsg, setAdminMsg] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const existing = getUser()
+    if (existing && existing.is_admin) {
+      setLoggedIn(true)
+    }
+  }, [])
 
   useEffect(() => {
     if (loggedIn) {
@@ -43,36 +46,55 @@ function Admin() {
     }
   }, [loggedIn])
 
-  const handleLogin = () => {
-    const found = admins.find(a => a.password === password)
-    if (found) { setLoggedIn(true); setError('') }
-    else setError('Incorrect admin password!')
+  const handleLogin = async () => {
+    setError('')
+    if (!email || !password) { setError('Email and password are required'); return }
+    setLoginLoading(true)
+    try {
+      const res = await axios.post(`${API}/api/auth/login`, { email, password })
+      if (!res.data.user.is_admin) {
+        setError('This account does not have admin access.')
+        setLoginLoading(false)
+        return
+      }
+      saveAuth(res.data)
+      setLoggedIn(true)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid email or password')
+    }
+    setLoginLoading(false)
+  }
+
+  const handleAdminLogout = () => {
+    clearAuth()
+    setLoggedIn(false)
+    navigate('/')
   }
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/stats`, { headers })
+      const res = await axios.get(`${API}/api/admin/stats`, { headers: getAuthHeaders() })
       setStats(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/users`, { headers })
+      const res = await axios.get(`${API}/api/admin/users`, { headers: getAuthHeaders() })
       setUsers(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchListings = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/listings`, { headers })
+      const res = await axios.get(`${API}/api/admin/listings`, { headers: getAuthHeaders() })
       setListings(res.data)
     } catch (err) { console.error(err) }
   }
 
   const fetchReports = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/reports`, { headers })
+      const res = await axios.get(`${API}/api/admin/reports`, { headers: getAuthHeaders() })
       setReports(res.data)
     } catch (err) { console.error(err) }
   }
@@ -87,7 +109,7 @@ function Admin() {
   const addCategory = async () => {
     if (!newCatName.trim()) { setCatMsg('❌ Name is required'); return }
     try {
-      await axios.post(`${API}/api/categories/`, { name: newCatName.trim(), icon: newCatIcon })
+      await axios.post(`${API}/api/categories/`, { name: newCatName.trim(), icon: newCatIcon }, { headers: getAuthHeaders() })
       setCatMsg(`✅ "${newCatName}" added!`)
       setNewCatName('')
       setNewCatIcon('📦')
@@ -100,7 +122,7 @@ function Admin() {
   const deleteCategory = async (id, name) => {
     if (!window.confirm(`Delete "${name}"? Existing listings with this category won't be affected.`)) return
     try {
-      await axios.delete(`${API}/api/categories/${id}`)
+      await axios.delete(`${API}/api/categories/${id}`, { headers: getAuthHeaders() })
       setCatMsg(`✅ "${name}" deleted!`)
       fetchCategories()
     } catch (err) { console.error(err) }
@@ -108,23 +130,33 @@ function Admin() {
 
   const verifyUser = async (id) => {
     try {
-      await axios.put(`${API}/api/admin/users/${id}/verify`, {}, { headers })
+      await axios.put(`${API}/api/admin/users/${id}/verify`, {}, { headers: getAuthHeaders() })
       fetchUsers()
     } catch (err) { console.error(err) }
   }
 
   const approveSeller = async (id) => {
     try {
-      await axios.put(`${API}/api/admin/users/${id}/approve-seller`, {}, { headers })
+      await axios.put(`${API}/api/admin/users/${id}/approve-seller`, {}, { headers: getAuthHeaders() })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
   }
 
+  const toggleAdmin = async (id) => {
+    try {
+      const res = await axios.put(`${API}/api/admin/users/${id}/toggle-admin`, {}, { headers: getAuthHeaders() })
+      setAdminMsg(`✅ ${res.data.is_admin ? 'Granted' : 'Revoked'} admin access.`)
+      fetchUsers()
+    } catch (err) {
+      setAdminMsg(`❌ ${err.response?.data?.error || 'Failed to update admin status'}`)
+    }
+  }
+
   const deleteUser = async (id) => {
     if (!window.confirm('Delete this user?')) return
     try {
-      await axios.delete(`${API}/api/admin/users/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/users/${id}`, { headers: getAuthHeaders() })
       fetchUsers()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -133,7 +165,7 @@ function Admin() {
   const deleteListing = async (id) => {
     if (!window.confirm('Delete this listing?')) return
     try {
-      await axios.delete(`${API}/api/admin/listings/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/listings/${id}`, { headers: getAuthHeaders() })
       fetchListings()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -141,7 +173,7 @@ function Admin() {
 
   const dismissReport = async (id) => {
     try {
-      await axios.delete(`${API}/api/admin/reports/${id}`, { headers })
+      await axios.delete(`${API}/api/admin/reports/${id}`, { headers: getAuthHeaders() })
       fetchReports()
       fetchStats()
     } catch (err) { console.error(err) }
@@ -150,43 +182,34 @@ function Admin() {
   const deleteReportedListing = async (listingId, reportId) => {
     if (!window.confirm('Delete this listing and dismiss the report?')) return
     try {
-      await axios.delete(`${API}/api/admin/listings/${listingId}`, { headers })
-      await axios.delete(`${API}/api/admin/reports/${reportId}`, { headers })
+      await axios.delete(`${API}/api/admin/listings/${listingId}`, { headers: getAuthHeaders() })
+      await axios.delete(`${API}/api/admin/reports/${reportId}`, { headers: getAuthHeaders() })
       fetchReports()
       fetchListings()
       fetchStats()
     } catch (err) { console.error(err) }
   }
 
-  const changePassword = () => {
-    if (!newPassword || newPassword !== confirmPassword) { setPasswordMsg('❌ Passwords do not match!'); return }
-    const updated = admins.map((a, i) => i === 0 ? { ...a, password: newPassword } : a)
-    setAdmins(updated)
-    localStorage.setItem('admin_accounts', JSON.stringify(updated))
-    setPasswordMsg('✅ Password changed!')
-    setNewPassword('')
-    setConfirmPassword('')
-  }
-
-  const addAdmin = () => {
-    if (!newAdminName || !newAdminPass) { setAdminMsg('❌ Fill in both fields!'); return }
-    const updated = [...admins, { username: newAdminName, password: newAdminPass }]
-    setAdmins(updated)
-    localStorage.setItem('admin_accounts', JSON.stringify(updated))
-    setAdminMsg(`✅ Admin "${newAdminName}" added!`)
-    setNewAdminName('')
-    setNewAdminPass('')
-  }
-
-  const removeAdmin = (index) => {
-    if (index === 0) { setAdminMsg('❌ Cannot remove main admin!'); return }
-    const updated = admins.filter((_, i) => i !== index)
-    setAdmins(updated)
-    localStorage.setItem('admin_accounts', JSON.stringify(updated))
-    setAdminMsg('✅ Admin removed!')
+  const changePassword = async () => {
+    setPasswordMsg('')
+    if (!currentPassword || !newPassword) { setPasswordMsg('❌ Fill in both fields'); return }
+    if (newPassword !== confirmPassword) { setPasswordMsg('❌ New passwords do not match!'); return }
+    try {
+      await axios.put(`${API}/api/admin/change-password`, {
+        current_password: currentPassword,
+        new_password: newPassword
+      }, { headers: getAuthHeaders() })
+      setPasswordMsg('✅ Password changed!')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      setPasswordMsg(`❌ ${err.response?.data?.error || 'Failed to change password'}`)
+    }
   }
 
   const pendingSellers = users.filter(u => u.student_id && !u.seller_approved)
+  const currentUser = getUser()
 
   const tabs = [
     { key:'stats', label:'📊 Dashboard' },
@@ -207,8 +230,11 @@ function Admin() {
         <h2 style={styles.loginTitle}>Admin Panel</h2>
         <p style={styles.loginSubtitle}>Evelyn Hone Market</p>
         {error && <div style={styles.errorBox}>{error}</div>}
-        <input style={styles.loginInput} type="password" placeholder="Enter admin password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-        <button style={styles.loginBtn} onClick={handleLogin} className="btn-hover">Login as Admin</button>
+        <input style={styles.loginInput} type="email" placeholder="Admin account email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+        <input style={styles.loginInput} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+        <button style={styles.loginBtn} onClick={handleLogin} disabled={loginLoading} className="btn-hover">
+          {loginLoading ? 'Checking...' : 'Login as Admin'}
+        </button>
         <button style={styles.backLink} onClick={() => navigate('/')}>← Back to Market</button>
       </div>
     </div>
@@ -219,7 +245,10 @@ function Admin() {
       <div style={styles.topBar}>
         <button style={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
         <span style={styles.topBarTitle}>🛡 Admin Panel</span>
-        <button style={styles.backBtn} onClick={() => navigate('/')}>← Market</button>
+        <div style={{display:'flex', gap:'0.5rem'}}>
+          <button style={styles.backBtn} onClick={() => navigate('/')}>← Market</button>
+          <button style={styles.backBtn} onClick={handleAdminLogout}>Logout</button>
+        </div>
       </div>
       {sidebarOpen && (
         <div style={styles.sidebar}>
@@ -297,7 +326,9 @@ function Admin() {
                   <div style={styles.userInfo}>
                     <div style={styles.userAvatar}>{u.username[0].toUpperCase()}</div>
                     <div>
-                      <p style={styles.userName}>{u.username} {u.verified && <span style={styles.vBadge}>✓</span>}</p>
+                      <p style={styles.userName}>
+                        {u.username} {u.verified && <span style={styles.vBadge}>✓</span>} {u.is_admin && <span style={styles.adminBadge}>ADMIN</span>}
+                      </p>
                       <p style={styles.userEmail}>{u.email}</p>
                       <p style={styles.userMeta}>ID: {u.student_id || '—'} | Seller: {u.seller_approved ? '✅' : u.student_id ? '⏳' : '❌'}</p>
                     </div>
@@ -308,7 +339,12 @@ function Admin() {
                     </button>
                     {u.student_id && (
                       <button style={{...styles.smallBtn, background: u.seller_approved ? '#D97706' : '#22C55E'}} onClick={() => approveSeller(u.id)}>
-                        {u.seller_approved ? 'Revoke' : 'Approve'}
+                        {u.seller_approved ? 'Revoke Seller' : 'Approve Seller'}
+                      </button>
+                    )}
+                    {currentUser && u.id !== currentUser.id && (
+                      <button style={{...styles.smallBtn, background: u.is_admin ? '#D97706' : colors.ink}} onClick={() => toggleAdmin(u.id)}>
+                        {u.is_admin ? 'Revoke Admin' : 'Make Admin'}
                       </button>
                     )}
                     <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => deleteUser(u.id)}>Delete</button>
@@ -316,6 +352,7 @@ function Admin() {
                 </div>
               ))}
             </div>
+            {adminMsg && <p style={styles.settingsMsg}>{adminMsg}</p>}
           </div>
         )}
         {tab === 'listings' && (
@@ -352,7 +389,7 @@ function Admin() {
                 />
                 <div style={styles.iconPicker}>
                   <p style={styles.iconLabel}>Pick an icon:</p>
-                  <div style={styles.iconGrid}>
+                  <div style={styles.iconGrid} className="ehm-icon-grid">
                     {commonIcons.map(icon => (
                       <button
                         key={icon}
@@ -409,28 +446,20 @@ function Admin() {
           <div>
             <h2 style={styles.pageTitle}>⚙️ Settings</h2>
             <div style={styles.settingsCard}>
-              <h3 style={styles.settingsTitle}>🔑 Change Password</h3>
+              <h3 style={styles.settingsTitle}>🔑 Change My Password</h3>
+              <p style={styles.settingsHint}>This changes the password for your real account ({currentUser?.email}).</p>
+              <input style={styles.settingsInput} type="password" placeholder="Current password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
               <input style={styles.settingsInput} type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
               <input style={styles.settingsInput} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
               <button style={styles.settingsBtn} onClick={changePassword} className="btn-hover">Update Password</button>
               {passwordMsg && <p style={styles.settingsMsg}>{passwordMsg}</p>}
             </div>
             <div style={styles.settingsCard}>
-              <h3 style={styles.settingsTitle}>👥 Admin Accounts</h3>
-              {admins.map((a, i) => (
-                <div key={i} style={styles.adminRow}>
-                  <span style={styles.adminName}>👤 {a.username}</span>
-                  {i > 0 ? <button style={{...styles.smallBtn, background: colors.accent}} onClick={() => removeAdmin(i)}>Remove</button>
-                  : <span style={styles.mainAdminBadge}>Main Admin</span>}
-                </div>
-              ))}
-              <div style={styles.addAdminForm}>
-                <h4 style={styles.addAdminTitle}>Add New Admin</h4>
-                <input style={styles.settingsInput} type="text" placeholder="Admin name" value={newAdminName} onChange={e => setNewAdminName(e.target.value)} />
-                <input style={styles.settingsInput} type="password" placeholder="Admin password" value={newAdminPass} onChange={e => setNewAdminPass(e.target.value)} />
-                <button style={styles.settingsBtn} onClick={addAdmin} className="btn-hover">Add Admin</button>
-                {adminMsg && <p style={styles.settingsMsg}>{adminMsg}</p>}
-              </div>
+              <h3 style={styles.settingsTitle}>👥 Admin Access</h3>
+              <p style={styles.settingsHint}>
+                To grant or revoke admin access, go to the <strong>Users</strong> tab and use the
+                "Make Admin" / "Revoke Admin" button on any user's row.
+              </p>
             </div>
           </div>
         )}
@@ -479,10 +508,11 @@ const styles = {
   userCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}` },
   userInfo: { display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem' },
   userAvatar: { width: '40px', height: '40px', borderRadius: '50%', background: colors.ink, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 },
-  userName: { color: colors.text, fontWeight: 700, margin: '0 0 0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  userName: { color: colors.text, fontWeight: 700, margin: '0 0 0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' },
   userEmail: { color: colors.textMuted, fontSize: '0.85rem', margin: '0 0 0.2rem' },
   userMeta: { color: colors.textMuted, fontSize: '0.8rem', margin: 0 },
   vBadge: { background: '#22C55E', color: 'white', padding: '0.1rem 0.45rem', borderRadius: radius.pill, fontSize: '0.7rem' },
+  adminBadge: { background: colors.accent, color: 'white', padding: '0.1rem 0.5rem', borderRadius: radius.pill, fontSize: '0.68rem', fontWeight: 700 },
   userActions: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
   smallBtn: { color: 'white', border: 'none', padding: '0.4rem 0.85rem', borderRadius: radius.sm, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, fontFamily: font.family },
   listingCard: { background: colors.surface, borderRadius: radius.md, padding: '1.2rem', border: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' },
@@ -498,14 +528,10 @@ const styles = {
   emptyState: { textAlign: 'center', padding: '3rem', background: colors.surface, borderRadius: radius.md, color: colors.textMuted, border: `1px solid ${colors.border}` },
   settingsCard: { background: colors.surface, borderRadius: radius.md, padding: '1.5rem', border: `1px solid ${colors.border}`, marginBottom: '1rem' },
   settingsTitle: { fontFamily: fontDisplay, color: colors.text, marginBottom: '1rem', fontSize: '1.05rem', fontWeight: 600 },
+  settingsHint: { color: colors.textMuted, fontSize: '0.85rem', marginBottom: '1rem', lineHeight: 1.6 },
   settingsInput: { width: '100%', padding: '0.8rem', borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: '0.95rem', boxSizing: 'border-box', color: colors.text, marginBottom: '0.8rem', fontFamily: font.family, background: colors.bg },
   settingsBtn: { width: '100%', padding: '0.8rem', background: colors.accent, color: 'white', border: 'none', borderRadius: radius.pill, cursor: 'pointer', fontWeight: 700 },
   settingsMsg: { color: '#16803D', fontSize: '0.85rem', marginTop: '0.5rem', textAlign: 'center' },
-  adminRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 0', borderBottom: `1px solid ${colors.border}` },
-  adminName: { color: colors.text, fontSize: '0.95rem' },
-  mainAdminBadge: { background: colors.accent, color: 'white', padding: '0.2rem 0.65rem', borderRadius: radius.pill, fontSize: '0.75rem' },
-  addAdminForm: { marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
-  addAdminTitle: { color: colors.text, marginBottom: '0.8rem', fontSize: '0.95rem', fontWeight: 700 },
   iconPicker: { marginBottom: '1rem' },
   iconLabel: { color: colors.textMuted, fontSize: '0.85rem', marginBottom: '0.5rem' },
   iconGrid: { display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.4rem', marginBottom: '0.5rem' },
