@@ -10,12 +10,10 @@ frontend as the primary client.
 
 ## Overview
 
-EHM lets verified students list products/services, message buyers and
+EHM lets verified students list products and services, message buyers and
 sellers directly, rate sellers, and manage listings through an admin panel.
-The defining design constraint of this project is that **not everyone can
-sell** — anyone can register and browse, but creating a listing requires
-going through a seller approval process. That gate, and how it's enforced,
-is the part most worth understanding before touching the code.
+Not every registered user can sell — creating a listing requires going
+through a seller approval process first.
 
 ---
 
@@ -34,9 +32,8 @@ is the part most worth understanding before touching the code.
 - Deployed on Vercel
 
 **Secondary frontend**
-- A separate Next.js client, built and maintained by a collaborator, that
-  talks to the same backend (see [Dual-Frontend Architecture](#dual-frontend-architecture)
-  below). It lives in its own repo, not this one.
+- A separate Next.js client, maintained in its own repo, that talks to the
+  same backend (see [Dual-Frontend Architecture](#dual-frontend-architecture)).
 
 ---
 
@@ -55,7 +52,7 @@ is the part most worth understanding before touching the code.
                 │                                        │
      ┌──────────▼───────────┐               ┌────────────▼────────────┐
      │  React/Vite frontend │               │   Next.js frontend      │
-     │  (this repo, Vercel) │               │  (collaborator's repo)  │
+     │  (this repo, Vercel) │               │  (separate repo)        │
      └───────────────────────┘               └──────────────────────────┘
 ```
 
@@ -66,8 +63,8 @@ through two different URL prefixes.
 
 ## Seller Verification & Approval Workflow
 
-This is the core trust mechanism of the marketplace: **a user cannot create
-a listing until an admin has approved them as a seller.**
+A user cannot create a listing until an admin has approved them as a
+seller.
 
 ### How it works
 
@@ -75,27 +72,25 @@ a listing until an admin has approved them as a seller.**
    and optional phone number. New users start with `seller_approved = false`
    and no `student_id` on file. They can browse, message, and rate — but not
    list.
-2. **Apply to become a seller** — From their profile, a user submits their
+2. **Apply to become a seller** — From their profile, a user submits a
    student ID (`POST /api/auth/submit-student-id`). This doesn't grant
-   selling rights by itself — it just puts them in the queue.
+   selling rights by itself; it places the user in the approval queue.
 3. **Pending state** — Once a student ID is on file but not yet approved,
-   the UI shows a "⏳ Pending" status. The user still cannot create listings
-   at this point — `CreateListing` checks `user.seller_approved` client-side,
-   and the backend enforces the same check server-side regardless of what
-   the client sends.
-4. **Admin review** — An admin reviews pending applications in the Admin
+   the UI shows a "Pending" status. Listing creation stays blocked — the
+   frontend checks `user.seller_approved`, and the backend enforces the
+   same check independently.
+4. **Admin review** — Admins review pending applications in the Admin
    panel (`pending_sellers` in `/api/admin/stats` counts users with a
-   `student_id` but `seller_approved = false`), and approves or rejects via
+   `student_id` but `seller_approved = false`) and approve or reject via
    `PUT /api/admin/users/<id>/approve-seller`, which toggles
    `seller_approved` on the user record.
 5. **Approved** — Once `seller_approved` is `true`, the user can create
-   listings. The check happens in `POST /api/listings/`:
+   listings. The gate lives in `POST /api/listings/`:
    ```python
    if not seller.seller_approved:
        return jsonify({'message': 'You must be approved as a seller first'}), 403
    ```
-   This is a hard server-side gate — it's not just a UI toggle. Even a
-   crafted API request from an unapproved account will be rejected.
+   This is enforced server-side regardless of what the client sends.
 
 ### States a user can be in
 
@@ -105,23 +100,16 @@ a listing until an admin has approved them as a seller.**
 | Set          | `false`            | Applied, awaiting admin decision |
 | Set          | `true`             | Approved seller — can list       |
 
-### Known gap: the secondary frontend
+### Secondary frontend limitation
 
-The "Apply to become a seller" UI (student ID submission form) only exists
-in **this** React frontend, inside `Profile.jsx` and `CreateListing.jsx`.
-It was never built into the secondary Next.js frontend. The backend enforces
-`seller_approved` identically for both clients, so this isn't a security
-gap — but it is a usability one:
-
-> Users signing up through the Next.js frontend have no way to submit a
-> student ID and get into the approval queue at all. They can register and
-> browse, but they'll never be able to list, because there's no UI path to
-> apply. An admin could manually flip `seller_approved` for them via the
-> database or `PUT /api/admin/users/<id>/approve-seller`, but there is no
-> self-serve application flow on that client.
-
-Fixing this means porting the student ID submission flow (or building an
-equivalent) into the Next.js frontend — not a backend change.
+The seller application UI (student ID submission form) exists only in the
+primary React frontend, inside `Profile.jsx` and `CreateListing.jsx`. It is
+not present in the secondary Next.js frontend. The backend enforces
+`seller_approved` identically for both clients, so this is a usability gap
+rather than a security one: users on the Next.js frontend can register and
+browse but have no self-serve path into the approval queue. An admin can
+grant `seller_approved` manually via `PUT /api/admin/users/<id>/approve-seller`,
+but the application step itself needs to be built into that client.
 
 ---
 
@@ -132,37 +120,31 @@ JWT-based, via Flask-JWT-Extended.
 - `POST /api/auth/register` and `POST /api/auth/login` return a `token`
   and a `user` object.
 - The token is sent as `Authorization: Bearer <token>` on protected routes.
-- Admin routes (`/api/admin/*`) require a valid JWT **and** `is_admin=true`
-  on that user's database record — checked server-side on every request via
-  the `require_admin` decorator. There is no separate admin key or secret
-  header; admin status lives only on the account itself.
-
-> Note: `backend/API_DOCUMENTATION.md` currently describes an older
-> `X-Admin-Key` header scheme. That was replaced with the JWT + `is_admin`
-> check described above (the old static key was shipped in frontend code
-> and visible to anyone). The API doc still needs updating to match.
+- Admin routes (`/api/admin/*`) require a valid JWT and `is_admin = true`
+  on the corresponding user record, checked server-side on every request
+  via the `require_admin` decorator. Admin status lives only on the
+  account itself — there is no separate admin key or header.
 
 ---
 
 ## Dual-Frontend Architecture
 
 `app.py` registers each blueprint twice: once under `/api/<resource>` for
-this repo's React frontend, and once with no prefix (`/<resource>`) for the
-Next.js frontend, which expects routes without the `/api` segment. Both
-sets of routes run the exact same view functions — it's routing only, not
-duplicated logic.
+the React frontend, and once with no prefix (`/<resource>`) for the Next.js
+frontend, which expects routes without the `/api` segment. Both route sets
+call the same view functions — it's routing only, not duplicated logic.
 
 ```python
-# Existing prefix - used by our own frontend
+# Existing prefix - used by the React frontend
 app.register_blueprint(auth, url_prefix='/api/auth')
 ...
-# No-prefix aliases - used by the second frontend
+# No-prefix aliases - used by the Next.js frontend
 app.register_blueprint(auth, url_prefix='/auth', name='auth_noprefix')
 ```
 
-Only `auth`, `listings`, and `users` currently have no-prefix aliases —
-messages, ratings, admin, reports, notifications, and categories are only
-reachable via `/api/*`.
+Only `auth`, `listings`, and `users` currently have no-prefix aliases;
+messages, ratings, admin, reports, notifications, and categories are
+reachable only via `/api/*`.
 
 ---
 
@@ -170,23 +152,23 @@ reachable via `/api/*`.
 
 ```
 backend/
-├── app.py                  # App factory, blueprint registration, config
-├── models.py                # SQLAlchemy models: User, Listing, Message,
-│                             # Rating, Category, Report, Notification
+├── app.py                    # App factory, blueprint registration, config
+├── models.py                 # SQLAlchemy models: User, Listing, Message,
+│                              # Rating, Category, Report, Notification
 ├── routes/
-│   ├── auth.py               # register, login, submit-student-id
-│   ├── listings.py           # CRUD + seller_approved gate on create
-│   ├── admin.py               # stats, user management, seller approval
+│   ├── auth.py                # register, login, submit-student-id
+│   ├── listings.py            # CRUD + seller_approved gate on create
+│   ├── admin.py                # stats, user management, seller approval
 │   ├── users.py, messages.py, ratings.py, reports.py,
 │   │   notifications.py, categories.py
-├── make_admin.py             # one-off script to promote a user to admin
-├── migrate_add_is_admin.py   # migration for the is_admin column
-├── API_DOCUMENTATION.md      # endpoint reference (see note above re: auth)
+├── make_admin.py              # promotes a user to admin
+├── migrate_add_is_admin.py    # migration for the is_admin column
+├── API_DOCUMENTATION.md       # full endpoint reference
 └── requirements.txt
 
 frontend/
 ├── src/
-│   ├── pages/                # Profile, CreateListing, Admin, etc.
+│   ├── pages/                 # Profile, CreateListing, Admin, etc.
 │   └── ...
 ├── vercel.json
 └── package.json
@@ -208,9 +190,9 @@ Environment variables:
 
 | Variable         | Required | Notes                                                              |
 |-------------------|----------|---------------------------------------------------------------------|
-| `DATABASE_URL`     | No       | Defaults to local SQLite. Set to your Neon Postgres URL in prod.   |
+| `DATABASE_URL`     | No       | Defaults to local SQLite. Set to the Neon Postgres URL in production. |
 | `SECRET_KEY`       | Recommended | Flask secret key.                                               |
-| `JWT_SECRET_KEY`   | **Yes, in production** | Falls back to a public default value if unset — the app prints a startup warning, because anyone who's seen this repo's source can forge tokens for any user (including admins) if the fallback is left in place. |
+| `JWT_SECRET_KEY`   | Required in production | Falls back to a public default value if unset (the app prints a startup warning) — leaving the fallback in place lets anyone who has seen the source forge tokens for any user, including admins. |
 
 ```bash
 python app.py
@@ -224,40 +206,29 @@ npm install
 npm run dev
 ```
 
-Point the frontend's API base URL at your local backend (`http://localhost:5000`)
-or the deployed Railway URL, depending on your `.env` setup.
+Set the frontend's API base URL to the local backend
+(`http://localhost:5000`) or the deployed Railway URL via `.env`.
 
-### Making yourself an admin
+### Creating an admin account
 
-Use `backend/make_admin.py` against your database to flip `is_admin` on
-your own account — there's no signup flow for admins by design.
+`backend/make_admin.py` promotes a user to admin by flipping `is_admin` on
+their record — there is no signup flow for admins by design.
 
 ---
 
 ## API Reference
 
 Full endpoint list, request/response shapes, and error codes are in
-[`backend/API_DOCUMENTATION.md`](backend/API_DOCUMENTATION.md). Treat the
-auth section of that file as outdated until it's updated to reflect JWT +
-`is_admin` (see [Authentication](#authentication) above).
+[`backend/API_DOCUMENTATION.md`](backend/API_DOCUMENTATION.md).
 
 ---
 
 ## Known Issues
 
-- The Next.js frontend has no "apply to become a seller" UI (see above).
+- The Next.js frontend has no "apply to become a seller" UI (see
+  [Seller Verification & Approval Workflow](#seller-verification--approval-workflow)).
 - Only `auth`, `listings`, and `users` have no-prefix route aliases for the
-  second frontend; expand as needed if it grows to use more endpoints.
-- `seller_approved` is enforced on listing **creation** only, not on
-  updates — a seller who is later revoked can still edit listings they
-  made while approved.
-
-### Recently fixed
-- `messages`, `ratings`, `reports`, and `submit-student-id` previously took
-  the acting user's ID directly from the request body, so a caller could
-  send a message, leave a rating, file a report, or apply for seller status
-  "as" any user ID. All four now require a JWT and derive the identity from
-  the token instead. Corresponding frontend calls were updated to send
-  `Authorization: Bearer <token>` via the existing `getAuthHeaders()` helper.
-- Admin auth (`API_DOCUMENTATION.md`) was updated to describe the real
-  JWT + `is_admin` scheme instead of the retired `X-Admin-Key` header.
+  Next.js frontend; extend as needed if it grows to use more endpoints.
+- `seller_approved` is enforced on listing creation only, not on updates —
+  a seller who is later revoked can still edit listings created while
+  approved.
