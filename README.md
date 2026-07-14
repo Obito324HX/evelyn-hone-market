@@ -100,6 +100,23 @@ seller.
 | Set          | `false`            | Applied, awaiting admin decision |
 | Set          | `true`             | Approved seller — can list       |
 
+### Checking a user's seller status
+
+`student_id` and `seller_approved` are only returned in the `user` object
+from `POST /api/auth/register` and `POST /api/auth/login` — there is
+currently no endpoint to re-fetch them afterward. `GET /api/users/<id>` is
+the general-purpose profile lookup, but it intentionally excludes these
+fields (see [API Reference](backend/API_DOCUMENTATION.md)).
+
+The React frontend works around this by storing the full `user` object in
+`localStorage` at login and updating it locally whenever the state changes
+(e.g. after `submit-student-id`), rather than re-querying the backend. Any
+other client implementing this flow — including the Next.js frontend —
+needs to do the same, or a status check on page reload / a fresh session
+has nowhere to ask the backend. Adding a `GET /api/auth/me` (or similar)
+endpoint that returns the current JWT holder's full profile would remove
+the need for this workaround.
+
 ### Secondary frontend limitation
 
 The seller application UI (student ID submission form) exists only in the
