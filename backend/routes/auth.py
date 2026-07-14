@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from models import db, User
 import re
 
@@ -89,6 +89,7 @@ def login():
     }), 200
 
 @auth.route('/submit-student-id', methods=['POST'])
+@jwt_required()
 def submit_student_id():
     data = request.get_json()
     student_id = data.get('student_id', '').strip()
@@ -96,7 +97,9 @@ def submit_student_id():
         return jsonify({'message': 'Student ID is required'}), 400
     if len(student_id) < 4:
         return jsonify({'message': 'Please enter a valid student ID'}), 400
-    user = User.query.get(data.get('user_id'))
+    # user_id now comes from the JWT, not the request body — previously a
+    # caller could submit a student ID on behalf of any user_id they chose.
+    user = User.query.get(get_jwt_identity())
     if not user:
         return jsonify({'message': 'User not found'}), 404
     user.student_id = student_id

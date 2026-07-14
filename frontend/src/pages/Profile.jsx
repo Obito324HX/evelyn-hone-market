@@ -64,9 +64,8 @@ function Profile() {
     setSubmitting(true)
     try {
       await axios.post(`${API}/api/auth/submit-student-id`, {
-        user_id: user.id,
         student_id: studentId
-      })
+      }, { headers: getAuthHeaders() })
       const updated = { ...user, student_id: studentId }
       localStorage.setItem('user', JSON.stringify(updated))
       setUser(updated)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { getUser } from '../utils/auth'
+import { getUser, getAuthHeaders } from '../utils/auth'
 import { colors, radius, shadow, font, fontDisplay } from '../theme'
 const API = import.meta.env.VITE_API_URL
 
@@ -48,9 +48,8 @@ function ListingDetail() {
       await axios.post(`${API}/api/ratings/`, {
         stars: userRating,
         comment,
-        rater_id: user.id,
         seller_id: listing.sellerId
-      })
+      }, { headers: getAuthHeaders() })
       setRated(true)
       fetchRatings(listing.sellerId)
     } catch (err) {
@@ -63,9 +62,8 @@ function ListingDetail() {
     try {
       await axios.post(`${API}/api/reports/`, {
         reason: reportReason,
-        reporter_id: user.id,
         listing_id: listing.id
-      })
+      }, { headers: getAuthHeaders() })
       setReported(true)
       setShowReport(false)
     } catch (err) {

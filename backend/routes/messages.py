@@ -1,20 +1,25 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Message, Notification, User
 
 messages = Blueprint('messages', __name__)
 
 @messages.route('/', methods=['POST'])
+@jwt_required()
 def send_message():
+    # sender_id now comes from the JWT, not the request body — previously
+    # anyone could send a message "as" any user by passing their user_id.
+    sender_id = get_jwt_identity()
     data = request.get_json()
     message = Message(
         content=data.get('content'),
-        sender_id=data.get('sender_id'),
+        sender_id=sender_id,
         receiver_id=data.get('receiver_id'),
         listing_id=data.get('listing_id')
     )
     db.session.add(message)
 
-    sender = User.query.get(data.get('sender_id'))
+    sender = User.query.get(sender_id)
     notification = Notification(
         content=f"New message from {sender.username if sender else 'someone'}",
         user_id=data.get('receiver_id')

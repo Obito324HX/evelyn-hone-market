@@ -1,13 +1,18 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Rating, User
 
 ratings = Blueprint('ratings', __name__)
 
 @ratings.route('/', methods=['POST'])
+@jwt_required()
 def add_rating():
+    # rater_id now comes from the JWT, not the request body — previously
+    # anyone could submit a rating "as" any user by passing their user_id.
+    rater_id = get_jwt_identity()
     data = request.get_json()
     existing = Rating.query.filter_by(
-        rater_id=data.get('rater_id'),
+        rater_id=rater_id,
         seller_id=data.get('seller_id')
     ).first()
     if existing:
@@ -17,7 +22,7 @@ def add_rating():
         rating = Rating(
             stars=data.get('stars'),
             comment=data.get('comment', ''),
-            rater_id=data.get('rater_id'),
+            rater_id=rater_id,
             seller_id=data.get('seller_id')
         )
         db.session.add(rating)

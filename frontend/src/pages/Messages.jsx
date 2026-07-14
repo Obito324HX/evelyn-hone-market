@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { getUser } from '../utils/auth'
+import { getUser, getAuthHeaders } from '../utils/auth'
 import { colors, radius, shadow, font, fontDisplay } from '../theme'
 const API = import.meta.env.VITE_API_URL
 
@@ -58,10 +58,9 @@ function Messages() {
     try {
       await axios.post(`${API}/api/messages/`, {
         content,
-        sender_id: user.id,
         receiver_id: selectedConvo.other_id,
         listing_id: selectedConvo.listing_id
-      })
+      }, { headers: getAuthHeaders() })
       setContent('')
       fetchMessages()
     } catch (err) {
